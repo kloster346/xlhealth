@@ -1,5 +1,9 @@
 import { createStore } from 'vuex'
 
+// 从localStorage恢复状态
+const savedUser = localStorage.getItem('user')
+const savedLoginStatus = localStorage.getItem('isLoggedIn')
+
 export default createStore({
   state: {
     // 基础应用状态
@@ -7,8 +11,8 @@ export default createStore({
     version: '1.0.0',
     
     // 基础用户状态（为后续扩展预留）
-    user: null,
-    isLoggedIn: false
+    user: savedUser ? JSON.parse(savedUser) : null,
+    isLoggedIn: savedLoginStatus === 'true'
   },
   
   getters: {
@@ -28,11 +32,24 @@ export default createStore({
     SET_USER(state, user) {
       state.user = user
       state.isLoggedIn = !!user
+      
+      // 同步到localStorage
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user))
+        localStorage.setItem('isLoggedIn', 'true')
+      } else {
+        localStorage.removeItem('user')
+        localStorage.setItem('isLoggedIn', 'false')
+      }
     },
     
     CLEAR_USER(state) {
       state.user = null
       state.isLoggedIn = false
+      
+      // 清除localStorage
+      localStorage.removeItem('user')
+      localStorage.setItem('isLoggedIn', 'false')
     }
   },
   
