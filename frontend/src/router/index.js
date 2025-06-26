@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import AIAssistant from '../views/AIAssistant.vue'
-import Profile from '../views/Profile.vue'
+import UserProfile from '../views/UserProfile.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 
@@ -32,7 +32,7 @@ const routes = [
   {
     path: '/profile',
     name: 'profile',
-    component: Profile,
+    component: UserProfile,
     meta: { requiresAuth: true }
   }
 ]
