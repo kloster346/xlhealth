@@ -62,6 +62,7 @@ import { computed } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { logoutUser } from '../api/auth'
 import {
   ChatDotRound,
   User,
@@ -97,33 +98,36 @@ export default {
 
     // 处理登录按钮点击
     const handleLogin = () => {
-      // 暂时模拟登录，设置一个测试用户
-      const mockUser = {
-        id: 1,
-        email: 'test@example.com',
-        nickname: '测试用户'
-      }
-      store.dispatch('setUser', mockUser)
-      ElMessage.success('登录成功')
+      router.push('/login')
     }
 
     // 处理注册按钮点击
     const handleRegister = () => {
-      ElMessage.info('注册功能将在 TASK003 中实现')
+      router.push('/register')
     }
 
     // 处理下拉菜单命令
-    const handleCommand = (command) => {
+    const handleCommand = async (command) => {
       switch (command) {
         case 'profile':
           router.push('/profile')
           break
         case 'logout':
-          store.dispatch('clearUser')
-          ElMessage.success('已退出登录')
-          // 如果当前在需要登录的页面，跳转到首页
-          if (route.path !== '/') {
-            router.push('/')
+          try {
+            // 调用退出登录API
+            await logoutUser()
+            
+            // 清除本地状态
+            await store.dispatch('logout')
+            
+            ElMessage.success('已退出登录')
+            
+            // 如果当前在需要登录的页面，跳转到首页
+            if (route.meta?.requiresAuth) {
+              router.push('/')
+            }
+          } catch (error) {
+            ElMessage.error('退出登录失败，请重试')
           }
           break
       }
