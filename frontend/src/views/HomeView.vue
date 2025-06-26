@@ -23,6 +23,28 @@
         </p>
       </div>
       
+      <!-- 动态消息展示区 -->
+      <div class="news-section">
+        <h3>最新动态</h3>
+        <div class="news-list">
+          <div 
+            v-for="news in newsList" 
+            :key="news.id" 
+            class="news-item"
+            :class="{ 'unread': !news.isRead }"
+          >
+            <div class="news-icon">
+              <el-icon><Bell /></el-icon>
+            </div>
+            <div class="news-content">
+              <h4>{{ news.title }}</h4>
+              <p>{{ news.content }}</p>
+              <span class="news-time">{{ formatTime(news.timestamp) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <div class="feature-list">
         <div class="feature-item">
           <el-icon class="feature-icon"><Setting /></el-icon>
@@ -32,12 +54,12 @@
         <div class="feature-item">
           <el-icon class="feature-icon"><SuccessFilled /></el-icon>
           <h3>开发状态</h3>
-          <p>TASK002 - 全局布局组件开发完成</p>
+          <p>TASK004 - 首页开发完成</p>
         </div>
         <div class="feature-item">
           <el-icon class="feature-icon"><ArrowRight /></el-icon>
           <h3>下一步</h3>
-          <p>TASK003 - 用户认证系统开发</p>
+          <p>TASK005 - AI 心理助手页面开发</p>
         </div>
       </div>
       
@@ -77,7 +99,8 @@ import {
   SuccessFilled,
   ArrowRight,
   Document,
-  Lock
+  Lock,
+  Bell
 } from '@element-plus/icons-vue'
 
 export default {
@@ -88,7 +111,8 @@ export default {
     SuccessFilled,
     ArrowRight,
     Document,
-    Lock
+    Lock,
+    Bell
   },
   setup() {
     const store = useStore()
@@ -98,31 +122,65 @@ export default {
     const isLoggedIn = computed(() => store.state.isLoggedIn)
     const user = computed(() => store.state.user)
 
+    // 动态消息数据（模拟数据）
+    const newsList = [
+      {
+        id: 1,
+        title: '系统更新',
+        content: 'TASK004 首页开发完成，新增动态消息展示功能',
+        timestamp: new Date().getTime() - 1000 * 60 * 30, // 30分钟前
+        isRead: false
+      },
+      {
+        id: 2,
+        title: '功能上线',
+        content: '用户认证系统已完成，支持登录注册和权限控制',
+        timestamp: new Date().getTime() - 1000 * 60 * 60 * 2, // 2小时前
+        isRead: true
+      },
+      {
+        id: 3,
+        title: '开发进展',
+        content: '全局布局组件开发完成，导航栏和页脚功能正常',
+        timestamp: new Date().getTime() - 1000 * 60 * 60 * 24, // 1天前
+        isRead: true
+      }
+    ]
+
+    // 时间格式化函数
+    const formatTime = (timestamp) => {
+      const now = new Date().getTime()
+      const diff = now - timestamp
+      const minute = 1000 * 60
+      const hour = minute * 60
+      const day = hour * 24
+
+      if (diff < hour) {
+        return Math.floor(diff / minute) + '分钟前'
+      } else if (diff < day) {
+        return Math.floor(diff / hour) + '小时前'
+      } else {
+        return Math.floor(diff / day) + '天前'
+      }
+    }
+
     // 处理开始对话按钮点击
     const handleStartChat = () => {
       if (isLoggedIn.value) {
         // 已登录，跳转到AI助手页面
         router.push('/ai-assistant')
       } else {
-        // 未登录，提示登录（在TASK003中会实现登录弹窗）
+        // 未登录，跳转到登录页面
         ElMessage.info('请先登录以使用AI心理助手功能')
-        // 暂时模拟登录
-        const mockUser = {
-          id: 1,
-          email: 'demo@example.com',
-          nickname: '演示用户'
-        }
-        store.dispatch('setUser', mockUser)
-        ElMessage.success('演示登录成功！')
-        setTimeout(() => {
-          router.push('/ai-assistant')
-        }, 1000)
+        router.push('/login')
       }
     }
 
     return {
       isLoggedIn,
       user,
+      newsList,
+      formatTime,
       handleStartChat
     }
   },
@@ -184,6 +242,78 @@ export default {
   color: #909399;
   font-size: 14px;
   margin: 10px 0;
+}
+
+/* 动态消息展示区 */
+.news-section {
+  margin: 3rem 0;
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.news-section h3 {
+  color: #303133;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  border-bottom: 2px solid #409eff;
+  padding-bottom: 0.5rem;
+}
+
+.news-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.news-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+}
+
+.news-item.unread {
+  background: #e8f4fd;
+  border-left-color: #409eff;
+}
+
+.news-item:hover {
+  background: #e8f4fd;
+  transform: translateX(5px);
+}
+
+.news-icon {
+  margin-right: 1rem;
+  color: #409eff;
+  font-size: 1.2rem;
+  margin-top: 0.2rem;
+}
+
+.news-content {
+  flex: 1;
+}
+
+.news-content h4 {
+  color: #303133;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.news-content p {
+  color: #606266;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.5;
+}
+
+.news-time {
+  color: #909399;
+  font-size: 0.875rem;
 }
 
 .feature-list {
