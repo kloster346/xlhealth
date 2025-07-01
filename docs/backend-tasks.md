@@ -27,62 +27,74 @@
 - ✅ 创建 Spring Boot 3.5.0 项目脚手架
 - ✅ 配置 MySQL 8.0 数据库连接
 - ✅ 配置 MyBatis Plus 3.5.8 ORM 框架
-- 配置 Spring Security 安全框架
-- ✅ 配置 JWT 认证机制（jjwt 0.9.1）
+- ✅ 配置 Spring Security 安全框架
+- ✅ 配置 JWT 认证机制（升级至 jjwt 0.11.5）
 - 配置 Redis 缓存（可选）
 - ✅ 设置项目目录结构和代码规范
-- 配置统一异常处理
-- 配置 API 响应格式标准化
-- 配置开发环境和生产环境配置文件
+- ✅ 配置统一异常处理
+- ✅ 配置 API 响应格式标准化
+- ✅ 配置开发环境和生产环境配置文件
 
 **版本**：v1.0
 
-**状态**：🔄 部分完成
+**状态**：✅ 已完成
 
 **验收标准清单**：
 
 - [x] Spring Boot 项目成功创建并能正常启动
 - [x] MySQL 数据库连接配置正确，可正常连接
 - [x] MyBatis Plus 配置完成，支持基础 CRUD 操作
-- [ ] Spring Security 基础配置完成
-- [x] JWT 依赖添加完成，需开发工具类实现 token 生成和验证
+- [x] Spring Security 基础配置完成
+- [x] JWT 工具类开发完成，支持 token 生成和验证
 - [ ] Redis 连接配置完成（如使用）
-- [ ] 项目目录结构清晰，符合 Spring Boot 最佳实践
-- [ ] 统一异常处理器配置完成
-- [ ] API 响应格式统一（ApiResponse 封装）
-- [ ] 配置文件管理规范（dev/prod 环境分离）
-- [ ] 日志配置完成（Logback）
-- [ ] Maven 依赖管理规范
+- [x] 项目目录结构清晰，符合 Spring Boot 最佳实践
+- [x] 统一异常处理器配置完成
+- [x] API 响应格式统一（ApiResponse 封装）
+- [x] 配置文件管理规范（dev/prod 环境分离）
+- [x] 日志配置完成（Logback）
+- [x] Maven 依赖管理规范
 
 **完成时间**：预计 2-3 天
 
 **实际完成情况**：
 
 - ✅ 项目脚手架已创建，使用 Spring Boot 3.5.0
-- ✅ Maven 依赖配置完成，包含 JWT、MyBatis Plus、MySQL 驱动等
+- ✅ Maven 依赖配置完成，包含 Spring Security、JWT、MyBatis Plus、MySQL 驱动等
 - ✅ 数据库连接配置完成（application.yml）
 - ✅ 项目目录结构已建立（controller、service、mapper、entity 等包结构）
-- ⏳ Spring Security 配置待完成
-- ⏳ JWT 工具类开发待完成
-- ⏳ 统一异常处理待完成
+- ✅ Spring Security 配置完成，支持 JWT 认证和 CORS 跨域
+- ✅ JWT 工具类开发完成，支持 token 生成、验证和解析
+- ✅ 统一异常处理配置完成
+- ✅ 健康检查接口实现完成（/api/v1/health 和 /api/v1/health/version）
+- ✅ UserDetailsService 实现完成，支持用户认证
 
 **阶段性验证**：
 
 完成后应能看到：
 
-- ✅ 项目正常启动，访问 http://localhost:8081/actuator/health 返回健康状态
+- ✅ 项目正常启动，访问 http://localhost:8081/api/v1/health 返回健康状态
+- ✅ 版本信息接口正常，访问 http://localhost:8081/api/v1/health/version 返回版本信息
 - ✅ 数据库连接正常，可执行基础 SQL 查询
-- ⏳ JWT 工具类单元测试通过
-- ⏳ 统一异常处理生效，返回标准错误格式
+- ✅ JWT 工具类功能正常，支持 token 生成和验证
+- ✅ 统一异常处理生效，返回标准错误格式
+- ✅ Spring Security 配置正确，支持 JWT 认证机制
 
 **注意事项**：
 
-- 使用 Spring Boot 2.7.x 版本，确保稳定性
+- 使用 Spring Boot 3.5.0 版本，确保稳定性
 - MySQL 连接池使用 HikariCP
 - JWT 密钥使用环境变量管理，不可硬编码
 - 异常处理要覆盖所有可能的错误场景
 - 日志级别在开发环境设置为 DEBUG
 - 预留 Swagger 文档配置，便于 API 测试
+
+**技术问题解决记录**：
+
+- ✅ 解决了 Spring Security 依赖缺失问题，添加了 spring-boot-starter-security 依赖
+- ✅ 解决了 JWT 版本兼容性问题，从 0.9.1 升级到 0.11.5 版本
+- ✅ 修复了 JwtUtils 中 signWith 方法参数不匹配的编译错误
+- ✅ 解决了 Keys 和 Jwts.parserBuilder() 方法找不到的问题
+- ✅ 完成了应用的成功启动和健康检查接口的正常响应
 
 ---
 
