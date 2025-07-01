@@ -25,134 +25,127 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+        private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    /**
-     * 处理参数验证异常
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Object>> handleValidationException(
-            MethodArgumentNotValidException ex, HttpServletRequest request) {
-        
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-        
-        logger.warn("参数验证失败: {} - {}", request.getRequestURI(), errors);
-        
-        return ResponseEntity.badRequest().body(
-            ApiResponse.error("VALIDATION_ERROR", "参数验证失败", errors)
-        );
-    }
+        /**
+         * 处理参数验证异常
+         */
+        @ExceptionHandler(MethodArgumentNotValidException.class)
+        public ResponseEntity<ApiResponse<Object>> handleValidationException(
+                        MethodArgumentNotValidException ex, HttpServletRequest request) {
 
-    /**
-     * 处理绑定异常
-     */
-    @ExceptionHandler(BindException.class)
-    public ResponseEntity<ApiResponse<Object>> handleBindException(
-            BindException ex, HttpServletRequest request) {
-        
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-        
-        logger.warn("数据绑定失败: {} - {}", request.getRequestURI(), errors);
-        
-        return ResponseEntity.badRequest().body(
-            ApiResponse.error("BIND_ERROR", "数据绑定失败", errors)
-        );
-    }
+                Map<String, String> errors = new HashMap<>();
+                ex.getBindingResult().getAllErrors().forEach(error -> {
+                        String fieldName = ((FieldError) error).getField();
+                        String errorMessage = error.getDefaultMessage();
+                        errors.put(fieldName, errorMessage);
+                });
 
-    /**
-     * 处理参数类型不匹配异常
-     */
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ApiResponse<Object>> handleTypeMismatchException(
-            MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
-        
-        String message = String.format("参数 '%s' 类型错误，期望类型: %s", 
-            ex.getName(), ex.getRequiredType().getSimpleName());
-        
-        logger.warn("参数类型不匹配: {} - {}", request.getRequestURI(), message);
-        
-        return ResponseEntity.badRequest().body(
-            ApiResponse.error("TYPE_MISMATCH", message)
-        );
-    }
+                logger.warn("参数验证失败: {} - {}", request.getRequestURI(), errors);
 
-    /**
-     * 处理认证异常
-     */
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiResponse<Object>> handleBadCredentialsException(
-            BadCredentialsException ex, HttpServletRequest request) {
-        
-        logger.warn("认证失败: {} - {}", request.getRequestURI(), ex.getMessage());
-        
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-            ApiResponse.error("BAD_CREDENTIALS", "用户名或密码错误")
-        );
-    }
+                return ResponseEntity.badRequest().body(
+                                ApiResponse.error("VALIDATION_ERROR", "参数验证失败", errors));
+        }
 
-    /**
-     * 处理访问拒绝异常
-     */
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiResponse<Object>> handleAccessDeniedException(
-            AccessDeniedException ex, HttpServletRequest request) {
-        
-        logger.warn("访问被拒绝: {} - {}", request.getRequestURI(), ex.getMessage());
-        
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-            ApiResponse.error("ACCESS_DENIED", "访问被拒绝，权限不足")
-        );
-    }
+        /**
+         * 处理绑定异常
+         */
+        @ExceptionHandler(BindException.class)
+        public ResponseEntity<ApiResponse<Object>> handleBindException(
+                        BindException ex, HttpServletRequest request) {
 
-    /**
-     * 处理业务异常
-     */
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiResponse<Object>> handleBusinessException(
-            BusinessException ex, HttpServletRequest request) {
-        
-        logger.warn("业务异常: {} - {} - {}", request.getRequestURI(), ex.getCode(), ex.getMessage());
-        
-        return ResponseEntity.status(ex.getHttpStatus()).body(
-            ApiResponse.error(ex.getCode(), ex.getMessage())
-        );
-    }
+                Map<String, String> errors = new HashMap<>();
+                ex.getBindingResult().getAllErrors().forEach(error -> {
+                        String fieldName = ((FieldError) error).getField();
+                        String errorMessage = error.getDefaultMessage();
+                        errors.put(fieldName, errorMessage);
+                });
 
-    /**
-     * 处理运行时异常
-     */
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ApiResponse<Object>> handleRuntimeException(
-            RuntimeException ex, HttpServletRequest request) {
-        
-        logger.error("运行时异常: {} - {}", request.getRequestURI(), ex.getMessage(), ex);
-        
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-            ApiResponse.error("RUNTIME_ERROR", "系统运行时错误")
-        );
-    }
+                logger.warn("数据绑定失败: {} - {}", request.getRequestURI(), errors);
 
-    /**
-     * 处理其他未知异常
-     */
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Object>> handleGenericException(
-            Exception ex, HttpServletRequest request) {
-        
-        logger.error("未知异常: {} - {}", request.getRequestURI(), ex.getMessage(), ex);
-        
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-            ApiResponse.error("INTERNAL_ERROR", "系统内部错误")
-        );
-    }
+                return ResponseEntity.badRequest().body(
+                                ApiResponse.error("BIND_ERROR", "数据绑定失败", errors));
+        }
+
+        /**
+         * 处理参数类型不匹配异常
+         */
+        @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+        public ResponseEntity<ApiResponse<Object>> handleTypeMismatchException(
+                        MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+
+                String requiredTypeName = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "未知类型";
+                String message = String.format("参数 '%s' 类型错误，期望类型: %s",
+                                ex.getName(), requiredTypeName);
+
+                logger.warn("参数类型不匹配: {} - {}", request.getRequestURI(), message);
+
+                return ResponseEntity.badRequest().body(
+                                ApiResponse.error("TYPE_MISMATCH", message));
+        }
+
+        /**
+         * 处理认证异常
+         */
+        @ExceptionHandler(BadCredentialsException.class)
+        public ResponseEntity<ApiResponse<Object>> handleBadCredentialsException(
+                        BadCredentialsException ex, HttpServletRequest request) {
+
+                logger.warn("认证失败: {} - {}", request.getRequestURI(), ex.getMessage());
+
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                                ApiResponse.error("BAD_CREDENTIALS", "用户名或密码错误"));
+        }
+
+        /**
+         * 处理访问拒绝异常
+         */
+        @ExceptionHandler(AccessDeniedException.class)
+        public ResponseEntity<ApiResponse<Object>> handleAccessDeniedException(
+                        AccessDeniedException ex, HttpServletRequest request) {
+
+                logger.warn("访问被拒绝: {} - {}", request.getRequestURI(), ex.getMessage());
+
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                                ApiResponse.error("ACCESS_DENIED", "访问被拒绝，权限不足"));
+        }
+
+        /**
+         * 处理业务异常
+         */
+        @ExceptionHandler(BusinessException.class)
+        public ResponseEntity<ApiResponse<Object>> handleBusinessException(
+                        BusinessException ex, HttpServletRequest request) {
+
+                logger.warn("业务异常: {} - {} - {}", request.getRequestURI(), ex.getCode(), ex.getMessage());
+
+                return ResponseEntity.status(ex.getHttpStatus()).body(
+                                ApiResponse.error(ex.getCode(), ex.getMessage()));
+        }
+
+        /**
+         * 处理运行时异常
+         */
+        @ExceptionHandler(RuntimeException.class)
+        public ResponseEntity<ApiResponse<Object>> handleRuntimeException(
+                        RuntimeException ex, HttpServletRequest request) {
+
+                logger.error("运行时异常: {} - {}", request.getRequestURI(), ex.getMessage(), ex);
+
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                                ApiResponse.error("RUNTIME_ERROR", "系统运行时错误"));
+        }
+
+        /**
+         * 处理其他未知异常
+         */
+        @ExceptionHandler(Exception.class)
+        public ResponseEntity<ApiResponse<Object>> handleGenericException(
+                        Exception ex, HttpServletRequest request) {
+
+                logger.error("未知异常: {} - {}", request.getRequestURI(), ex.getMessage(), ex);
+
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                                ApiResponse.error("INTERNAL_ERROR", "系统内部错误"));
+        }
 }
