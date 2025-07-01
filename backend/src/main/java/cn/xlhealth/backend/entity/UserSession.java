@@ -17,10 +17,22 @@ import java.time.LocalDateTime;
 public class UserSession {
 
     /**
-     * 会话ID(JWT Token ID)
+     * 主键ID
      */
-    @TableId(value = "session_id", type = IdType.INPUT)
-    private String sessionId;
+    @TableId(value = "id", type = IdType.AUTO)
+    private Long id;
+
+    /**
+     * 会话令牌
+     */
+    @TableField("session_token")
+    private String sessionToken;
+
+    /**
+     * 刷新令牌
+     */
+    @TableField("refresh_token")
+    private String refreshToken;
 
     /**
      * 用户ID
@@ -45,8 +57,8 @@ public class UserSession {
     /**
      * 创建时间
      */
-    @TableField(value = "created_at", fill = FieldFill.INSERT)
-    private LocalDateTime createdAt;
+    @TableField(value = "created_time", fill = FieldFill.INSERT)
+    private LocalDateTime createdTime;
 
     /**
      * 过期时间
@@ -55,8 +67,29 @@ public class UserSession {
     private LocalDateTime expiresAt;
 
     /**
-     * 最后访问时间
+     * 最后活动时间
      */
-    @TableField("last_accessed_at")
+    @TableField("last_activity_time")
     private LocalDateTime lastAccessedAt;
+
+    /**
+     * 更新时间
+     */
+    @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedTime;
+
+    /**
+     * 逻辑删除标识
+     * 0: 未删除, 1: 已删除
+     */
+    @TableLogic
+    @TableField("deleted")
+    private Integer deleted;
+
+    /**
+     * 会话状态
+     * 0: 已失效, 1: 有效
+     */
+    @TableField("status")
+    private Integer status;
 }

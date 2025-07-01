@@ -58,25 +58,25 @@ public class User {
      * 账户状态
      */
     @TableField("status")
-    private UserStatus status;
+    private Integer status;
 
     /**
      * 创建时间
      */
-    @TableField(value = "created_at", fill = FieldFill.INSERT)
-    private LocalDateTime createdAt;
+    @TableField(value = "created_time", fill = FieldFill.INSERT)
+    private LocalDateTime createdTime;
 
     /**
      * 更新时间
      */
-    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updatedAt;
+    @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedTime;
 
     /**
      * 最后登录时间
      */
-    @TableField("last_login_at")
-    private LocalDateTime lastLoginAt;
+    @TableField("last_login_time")
+    private LocalDateTime lastLoginTime;
 
     /**
      * 用户状态枚举

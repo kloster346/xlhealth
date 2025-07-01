@@ -139,11 +139,11 @@ public class MapperTest {
         user.setEmail("test@example.com");
         user.setPasswordHash("hashedpassword");
         user.setNickname("Test User");
-        user.setStatus(User.UserStatus.ACTIVE);
+        user.setStatus(1); // 1 表示 ACTIVE 状态
         
         assertNotNull(user);
         assertEquals("testuser", user.getUsername());
-        assertEquals(User.UserStatus.ACTIVE, user.getStatus());
+        assertEquals(Integer.valueOf(1), user.getStatus());
         
         // 测试创建对话实体
         Conversation conversation = new Conversation();

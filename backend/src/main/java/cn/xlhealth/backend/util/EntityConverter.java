@@ -732,8 +732,7 @@ public class EntityConverter {
     public static class UserSessionResponseDto {
         private Long id;
         private Long userId;
-        private String sessionId;
-        private String sessionToken; // 将被设置为null
+        private String sessionToken;
         private String ipAddress;
         private String userAgent;
         private LocalDateTime createdAt;
@@ -755,14 +754,6 @@ public class EntityConverter {
 
         public void setUserId(Long userId) {
             this.userId = userId;
-        }
-
-        public String getSessionId() {
-            return sessionId;
-        }
-
-        public void setSessionId(String sessionId) {
-            this.sessionId = sessionId;
         }
 
         public String getSessionToken() {

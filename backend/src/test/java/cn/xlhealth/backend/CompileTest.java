@@ -30,14 +30,14 @@ public class CompileTest {
         user.setPasswordHash("hashedpassword");
         user.setNickname("Test User");
         user.setAvatarUrl("http://example.com/avatar.jpg");
-        user.setStatus(User.UserStatus.ACTIVE);
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
-        user.setLastLoginAt(LocalDateTime.now());
+        user.setStatus(1); // 1 表示 ACTIVE 状态
+        user.setCreatedTime(LocalDateTime.now());
+        user.setUpdatedTime(LocalDateTime.now());
+        user.setLastLoginTime(LocalDateTime.now());
         
         assertNotNull(user);
         assertEquals("testuser", user.getUsername());
-        assertEquals(User.UserStatus.ACTIVE, user.getStatus());
+        assertEquals(Integer.valueOf(1), user.getStatus());
         
         // 测试Conversation实体类
         Conversation conversation = new Conversation();
@@ -109,19 +109,19 @@ public class CompileTest {
         
         // 测试UserSession实体类
         UserSession session = new UserSession();
-        session.setSessionId("session123");
+        session.setSessionToken("session123");
         session.setUserId(1L);
         session.setIpAddress("192.168.1.1");
         session.setUserAgent("Test Agent");
-        session.setCreatedAt(LocalDateTime.now());
+        session.setCreatedTime(LocalDateTime.now());
         session.setExpiresAt(LocalDateTime.now().plusHours(24));
         session.setLastAccessedAt(LocalDateTime.now());
         
-        assertEquals("session123", session.getSessionId());
+        assertEquals("session123", session.getSessionToken());
         assertEquals(Long.valueOf(1L), session.getUserId());
         assertEquals("192.168.1.1", session.getIpAddress());
         assertEquals("Test Agent", session.getUserAgent());
-        assertNotNull(session.getCreatedAt());
+        assertNotNull(session.getCreatedTime());
         assertNotNull(session.getExpiresAt());
         assertNotNull(session.getLastAccessedAt());
     }
@@ -163,8 +163,8 @@ public class CompileTest {
         user.setEmail("test@example.com");
         user.setPasswordHash("hashedpassword");
         user.setNickname("Test User");
-        user.setStatus(User.UserStatus.ACTIVE);
-        user.setCreatedAt(LocalDateTime.now());
+        user.setStatus(1); // 1 表示 ACTIVE 状态
+        user.setCreatedTime(LocalDateTime.now());
         
         // 测试用户实体转换
         EntityConverter.UserResponseDto userDto = EntityConverter.toUserResponseDto(user);

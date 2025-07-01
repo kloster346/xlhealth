@@ -1,6 +1,7 @@
 package cn.xlhealth.backend.ui.interceptor;
 
 import cn.xlhealth.backend.config.JwtUtils;
+import cn.xlhealth.backend.service.UserSessionService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,6 +31,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private UserDetailsService userDetailsService;
+    
+    @Autowired
+    private UserSessionService userSessionService;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, 
@@ -41,27 +45,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = getJwtFromRequest(request);
             
             if (StringUtils.hasText(jwt) && jwtUtils.validateToken(jwt)) {
-                // 从token中获取用户名
-                String username = jwtUtils.getUsernameFromToken(jwt);
-                
-                // 加载用户详情
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                
-                // 验证token是否与用户匹配
-                if (jwtUtils.validateToken(jwt, userDetails.getUsername())) {
-                    // 创建认证对象
-                    UsernamePasswordAuthenticationToken authentication = 
-                        new UsernamePasswordAuthenticationToken(
-                            userDetails, 
-                            null, 
-                            userDetails.getAuthorities()
-                        );
+                // 验证session是否存在且有效
+                if (userSessionService.isSessionValid(jwt)) {
+                    // 从token中获取用户名
+                    String username = jwtUtils.getUsernameFromToken(jwt);
                     
-                    // 设置认证详情
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    // 加载用户详情
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                     
-                    // 设置安全上下文
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    // 验证token是否与用户匹配
+                    if (jwtUtils.validateToken(jwt, userDetails.getUsername())) {
+                        // 创建认证对象
+                        UsernamePasswordAuthenticationToken authentication = 
+                            new UsernamePasswordAuthenticationToken(
+                                userDetails, 
+                                null, 
+                                userDetails.getAuthorities()
+                            );
+                        
+                        // 设置认证详情
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        
+                        // 设置安全上下文
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
                 }
             }
         } catch (Exception ex) {

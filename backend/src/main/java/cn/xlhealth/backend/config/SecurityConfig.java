@@ -86,6 +86,7 @@ public class SecurityConfig {
             // 配置请求授权
             .authorizeHttpRequests(auth -> auth
                 // 允许访问的公开接口
+                .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/health/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()

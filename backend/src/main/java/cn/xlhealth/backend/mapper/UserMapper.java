@@ -38,13 +38,13 @@ public interface UserMapper extends BaseMapper<User> {
     /**
      * 更新用户最后登录时间
      */
-    @Update("UPDATE users SET last_login_at = #{lastLoginAt}, updated_at = NOW() WHERE id = #{userId}")
-    int updateLastLoginTime(@Param("userId") Long userId, @Param("lastLoginAt") LocalDateTime lastLoginAt);
+    @Update("UPDATE users SET last_login_time = #{lastLoginTime}, updated_time = NOW() WHERE id = #{userId}")
+    int updateLastLoginTime(@Param("userId") Long userId, @Param("lastLoginTime") LocalDateTime lastLoginTime);
 
     /**
      * 根据状态分页查询用户列表
      */
-    @Select("SELECT * FROM users WHERE status = #{status} ORDER BY created_at DESC")
+    @Select("SELECT * FROM users WHERE status = #{status} ORDER BY created_time DESC")
     IPage<User> findByStatus(Page<User> page, @Param("status") String status);
 
     /**

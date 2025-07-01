@@ -57,8 +57,10 @@ public class MyBatisPlusConfig {
             LocalDateTime now = LocalDateTime.now();
             
             // 自动填充创建时间
+            this.strictInsertFill(metaObject, "createdTime", LocalDateTime.class, now);
             this.strictInsertFill(metaObject, "createdAt", LocalDateTime.class, now);
             // 自动填充更新时间
+            this.strictInsertFill(metaObject, "updatedTime", LocalDateTime.class, now);
             this.strictInsertFill(metaObject, "updatedAt", LocalDateTime.class, now);
             // 自动填充逻辑删除字段
             this.strictInsertFill(metaObject, "isDeleted", Boolean.class, false);
@@ -70,6 +72,7 @@ public class MyBatisPlusConfig {
         @Override
         public void updateFill(MetaObject metaObject) {
             // 自动填充更新时间
+            this.strictUpdateFill(metaObject, "updatedTime", LocalDateTime.class, LocalDateTime.now());
             this.strictUpdateFill(metaObject, "updatedAt", LocalDateTime.class, LocalDateTime.now());
         }
     }
