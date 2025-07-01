@@ -1,11 +1,16 @@
 package cn.xlhealth.backend.config;
 
 import com.baomidou.mybatisplus.annotation.DbType;
+import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+import org.apache.ibatis.reflection.MetaObject;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
 
 /**
  * MyBatis Plus 配置类
@@ -36,5 +41,36 @@ public class MyBatisPlusConfig {
         interceptor.addInnerInterceptor(paginationInnerInterceptor);
         
         return interceptor;
+    }
+
+    /**
+     * 自动填充配置
+     */
+    @Component
+    public static class MyMetaObjectHandler implements MetaObjectHandler {
+
+        /**
+         * 插入时自动填充
+         */
+        @Override
+        public void insertFill(MetaObject metaObject) {
+            LocalDateTime now = LocalDateTime.now();
+            
+            // 自动填充创建时间
+            this.strictInsertFill(metaObject, "createdAt", LocalDateTime.class, now);
+            // 自动填充更新时间
+            this.strictInsertFill(metaObject, "updatedAt", LocalDateTime.class, now);
+            // 自动填充逻辑删除字段
+            this.strictInsertFill(metaObject, "isDeleted", Boolean.class, false);
+        }
+
+        /**
+         * 更新时自动填充
+         */
+        @Override
+        public void updateFill(MetaObject metaObject) {
+            // 自动填充更新时间
+            this.strictUpdateFill(metaObject, "updatedAt", LocalDateTime.class, LocalDateTime.now());
+        }
     }
 }
