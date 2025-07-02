@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 
 /**
  * 认证控制器
@@ -112,51 +113,70 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(HttpServletRequest request) {
         log.info("刷新token请求");
         
-        // 从请求头中获取token
-        String oldToken = extractTokenFromRequest(request);
-        if (oldToken == null) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("缺少访问令牌"));
-        }
-        
         try {
+            // 从请求头中获取token
+            String oldToken = extractTokenFromRequest(request);
+            if (oldToken == null || oldToken.trim().isEmpty()) {
+                log.warn("刷新token请求缺少访问令牌");
+                return ResponseEntity.badRequest().body(ApiResponse.error("MISSING_TOKEN", "缺少访问令牌"));
+            }
+            
+            log.debug("提取到的token: {}", oldToken.substring(0, Math.min(oldToken.length(), 20)) + "...");
+        
+            // 首先验证token格式和有效性
+            if (!jwtUtils.validateToken(oldToken)) {
+                log.warn("刷新token失败: token格式无效");
+                return ResponseEntity.badRequest().body(ApiResponse.error("INVALID_TOKEN", "无效的访问令牌"));
+            }
+            
             // 检查会话状态
             String sessionStatus = userSessionService.checkSessionStatus(oldToken);
+            log.debug("会话状态检查结果: {}", sessionStatus);
             
             switch (sessionStatus) {
                 case "NOT_FOUND":
-                    return ResponseEntity.badRequest().body(ApiResponse.error("会话不存在"));
+                    log.warn("刷新token失败: 会话不存在");
+                    return ResponseEntity.badRequest().body(ApiResponse.error("SESSION_NOT_FOUND", "会话不存在"));
                 case "LOGGED_OUT":
-                    return ResponseEntity.badRequest().body(ApiResponse.error("会话已失效"));
+                    log.warn("刷新token失败: 会话已失效");
+                    return ResponseEntity.badRequest().body(ApiResponse.error("SESSION_INVALID", "会话已失效"));
                 case "EXPIRED":
-                    return ResponseEntity.badRequest().body(ApiResponse.error("会话已过期"));
+                    log.warn("刷新token失败: 会话已过期");
+                    return ResponseEntity.badRequest().body(ApiResponse.error("SESSION_EXPIRED", "会话已过期"));
                 case "VALID":
                     break;
                 default:
-                    return ResponseEntity.badRequest().body(ApiResponse.error("未知的会话状态"));
-            }
-            
-            // 验证token格式
-            if (!jwtUtils.validateToken(oldToken)) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("无效的访问令牌"));
+                    log.warn("刷新token失败: 未知的会话状态 - {}", sessionStatus);
+                    return ResponseEntity.badRequest().body(ApiResponse.error("UNKNOWN_SESSION_STATUS", "未知的会话状态"));
             }
             
             // 生成新的token
             String newToken = jwtUtils.refreshToken(oldToken);
-            if (newToken == null) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("刷新令牌失败"));
+            if (newToken == null || newToken.trim().isEmpty()) {
+                log.error("刷新token失败: 无法生成新token");
+                return ResponseEntity.badRequest().body(ApiResponse.error("TOKEN_GENERATION_FAILED", "刷新令牌失败"));
             }
+            
+            log.debug("生成新token成功: {}", newToken.substring(0, Math.min(newToken.length(), 20)) + "...");
             
             // 更新数据库中的会话记录
             boolean sessionUpdated = userSessionService.refreshSession(oldToken, newToken);
             if (!sessionUpdated) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("更新会话失败"));
+                log.error("刷新token失败: 更新会话记录失败");
+                return ResponseEntity.badRequest().body(ApiResponse.error("SESSION_UPDATE_FAILED", "更新会话失败"));
             }
             
             // 获取用户信息
             String username = jwtUtils.getUsernameFromToken(newToken);
+            if (username == null || username.trim().isEmpty()) {
+                log.error("刷新token失败: 无法从新token中提取用户名");
+                return ResponseEntity.badRequest().body(ApiResponse.error("USERNAME_EXTRACTION_FAILED", "无法提取用户信息"));
+            }
+            
             var user = userService.findByUsername(username);
             if (user == null) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("用户不存在"));
+                log.error("刷新token失败: 用户不存在 - {}", username);
+                return ResponseEntity.badRequest().body(ApiResponse.error("USER_NOT_FOUND", "用户不存在"));
             }
             
             // 构建响应
@@ -182,11 +202,17 @@ public class AuthController {
             Long jwtExpiration = 86400L; // 默认24小时，可以从配置中获取
             AuthResponse authResponse = new AuthResponse(newToken, "Bearer", jwtExpiration, userInfo);
             
+            log.info("刷新token成功: username={}", username);
             return ResponseEntity.ok(ApiResponse.success("刷新成功", authResponse));
             
+        } catch (io.jsonwebtoken.JwtException e) {
+            log.error("刷新token失败: JWT异常", e);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("JWT_ERROR", "令牌处理失败: " + e.getMessage()));
         } catch (Exception e) {
-            log.error("刷新token失败", e);
-            return ResponseEntity.badRequest().body(ApiResponse.error("刷新令牌失败: " + e.getMessage()));
+            log.error("刷新token失败: 未知异常", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("REFRESH_ERROR", "刷新令牌失败: " + e.getMessage()));
         }
     }
 

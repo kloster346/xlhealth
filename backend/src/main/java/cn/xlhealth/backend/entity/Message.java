@@ -33,11 +33,7 @@ public class Message {
     @TableField("user_id")
     private Long userId;
 
-    /**
-     * 消息类型
-     */
-    @TableField("message_type")
-    private MessageType messageType;
+
 
     /**
      * 消息角色
@@ -55,7 +51,7 @@ public class Message {
      * 内容类型
      */
     @TableField("content_type")
-    private String contentType;
+    private ContentType contentType;
 
     /**
      * token数量
@@ -97,7 +93,7 @@ public class Message {
      * 消息状态
      */
     @TableField("status")
-    private Byte status;
+    private MessageStatus status;
 
     /**
      * 错误信息
@@ -124,14 +120,7 @@ public class Message {
     @TableLogic
     private Boolean deleted;
 
-    /**
-     * 消息类型枚举
-     */
-    public enum MessageType {
-        USER,       // 用户消息
-        ASSISTANT,  // 助手消息
-        SYSTEM      // 系统消息
-    }
+
 
     /**
      * 消息角色枚举
@@ -140,5 +129,25 @@ public class Message {
         USER,       // 用户
         ASSISTANT,  // 助手
         SYSTEM      // 系统
+    }
+
+    /**
+     * 内容类型枚举
+     */
+    public enum ContentType {
+        TEXT,       // 文本
+        IMAGE,      // 图片
+        AUDIO,      // 音频
+        VIDEO,      // 视频
+        FILE        // 文件
+    }
+
+    /**
+     * 消息状态枚举
+     */
+    public enum MessageStatus {
+        FAILED,     // 失败
+        SUCCESS,    // 成功
+        PROCESSING  // 处理中
     }
 }

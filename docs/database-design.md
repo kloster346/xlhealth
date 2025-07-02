@@ -164,10 +164,10 @@ erDiagram
 | phone         | VARCHAR(20)  | NULL               | NULL                        | 手机号码              | 13800138000            |
 | nickname      | VARCHAR(50)  | NOT NULL           | -                           | 用户昵称（显示用）    | 小明                   |
 | avatar_url    | VARCHAR(500) | NULL               | NULL                        | 头像 URL              | /avatars/user001.jpg   |
-| gender        | TINYINT      | NULL               | NULL                        | 性别: 0-未知, 1-男, 2-女 | 1                   |
+| gender        | ENUM('MALE', 'FEMALE', 'OTHER') | NULL               | 'OTHER'                     | 性别: MALE-男, FEMALE-女, OTHER-其他 | 'MALE'             |
 | birth_date    | DATE         | NULL               | NULL                        | 出生日期              | 1990-01-01             |
 | profile       | TEXT         | NULL               | NULL                        | 个人简介              | 这是我的个人简介       |
-| status        | TINYINT      | NOT NULL           | 1                           | 状态: 0-禁用, 1-正常, 2-待验证 | 1                |
+| status        | ENUM('ACTIVE', 'INACTIVE', 'SUSPENDED', 'DELETED') | NOT NULL           | 'ACTIVE'                    | 状态: ACTIVE-正常, INACTIVE-禁用, SUSPENDED-暂停, DELETED-已删除 | 'ACTIVE'           |
 | last_login_time | DATETIME   | NULL               | NULL                        | 最后登录时间          | 2024-01-01 10:00:00    |
 | last_login_ip | VARCHAR(45)  | NULL               | NULL                        | 最后登录IP            | 192.168.1.100          |
 | created_time  | DATETIME     | NOT NULL           | CURRENT_TIMESTAMP           | 创建时间              | 2024-01-01 10:00:00    |
@@ -182,7 +182,9 @@ erDiagram
 | user_id         | BIGINT       | FK, NOT NULL, INDEX | -                           | 用户 ID      | 1001                    |
 | title           | VARCHAR(200) | NOT NULL            | -                           | 对话标题     | 关于焦虑的咨询          |
 | summary         | TEXT         | NULL                | NULL                        | 对话摘要     | 用户咨询焦虑问题的对话  |
-| status          | TINYINT      | NOT NULL            | 1                           | 状态: 0-已删除, 1-进行中, 2-已结束 | 1                    |
+| status          | ENUM('ACTIVE', 'ARCHIVED', 'DELETED') | NOT NULL            | 'ACTIVE'                    | 状态: ACTIVE-进行中, ARCHIVED-已归档, DELETED-已删除 | 'ACTIVE'             |
+| metadata        | JSON         | NULL                | NULL                        | 元数据(JSON格式)      | {}                      |
+| last_message_at | DATETIME     | NULL                | NULL                        | 最后消息时间          | 2024-01-01 10:30:00     |
 | message_count   | INT          | NOT NULL            | 0                           | 消息数量     | 15                      |
 | total_tokens    | INT          | NOT NULL            | 0                           | 总token数    | 1500                    |
 | start_time      | DATETIME     | NULL                | NULL                        | 开始时间     | 2024-01-01 10:00:00     |
@@ -198,9 +200,10 @@ erDiagram
 | id | BIGINT | PRIMARY KEY, AUTO_INCREMENT | - | 消息唯一标识 |
 | conversation_id | BIGINT | FOREIGN KEY, NOT NULL | - | 对话ID |
 | user_id | BIGINT | FOREIGN KEY, NOT NULL | - | 用户ID |
-| role | ENUM('user', 'assistant', 'system') | NOT NULL | - | 消息角色 |
+| role | ENUM('USER', 'ASSISTANT', 'SYSTEM') | NOT NULL | - | 消息角色: USER-用户, ASSISTANT-AI助手, SYSTEM-系统 |
+| message_type | ENUM('USER', 'ASSISTANT', 'SYSTEM') | NOT NULL | 'USER' | 消息类型: USER-用户消息, ASSISTANT-AI回复, SYSTEM-系统消息 |
 | content | TEXT | NOT NULL | - | 消息内容 |
-| content_type | ENUM('text', 'image', 'audio', 'video', 'file') | NOT NULL | 'text' | 内容类型 |
+| content_type | ENUM('TEXT', 'IMAGE', 'AUDIO', 'VIDEO', 'FILE') | NOT NULL | 'TEXT' | 内容类型: TEXT-文本, IMAGE-图片, AUDIO-音频, VIDEO-视频, FILE-文件 |
 | metadata | JSON | - | NULL | 消息元数据 |
 | token_count | INT | - | NULL | token数量 |
 | model_name | VARCHAR(100) | - | NULL | 使用的模型名称 |
@@ -208,7 +211,7 @@ erDiagram
 | completion_tokens | INT | - | NULL | 完成token数 |
 | total_tokens | INT | - | NULL | 总token数 |
 | response_time | INT | - | NULL | 响应时间(毫秒) |
-| status | TINYINT | NOT NULL | 1 | 状态: 0-失败, 1-成功, 2-处理中 |
+| status | ENUM('FAILED', 'SUCCESS', 'PROCESSING') | NOT NULL | 'SUCCESS' | 状态: FAILED-失败, SUCCESS-成功, PROCESSING-处理中 |
 | error_message | TEXT | - | NULL | 错误信息 |
 | created_time | DATETIME | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
 | updated_time | DATETIME | NOT NULL | CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 更新时间 |
@@ -226,7 +229,7 @@ erDiagram
 | ip_address | VARCHAR(45) | NOT NULL | - | IP地址 |
 | user_agent | TEXT | - | NULL | 用户代理 |
 | location | VARCHAR(200) | - | NULL | 地理位置 |
-| status | TINYINT | NOT NULL | 1 | 状态: 0-已失效, 1-活跃, 2-已过期 |
+| status | ENUM('INVALID', 'ACTIVE', 'EXPIRED') | NOT NULL | 'ACTIVE' | 状态: INVALID-已失效, ACTIVE-活跃, EXPIRED-已过期 |
 | expires_at | DATETIME | NOT NULL | - | 过期时间 |
 | last_activity_time | DATETIME | NOT NULL | CURRENT_TIMESTAMP | 最后活动时间 |
 | created_time | DATETIME | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
@@ -240,7 +243,7 @@ erDiagram
 | id | BIGINT | PRIMARY KEY, AUTO_INCREMENT | - | 配置唯一标识 |
 | config_key | VARCHAR(100) | UNIQUE, NOT NULL | - | 配置键 |
 | config_value | TEXT | NOT NULL | - | 配置值 |
-| config_type | ENUM('STRING', 'NUMBER', 'BOOLEAN', 'JSON') | NOT NULL | 'STRING' | 配置类型 |
+| config_type | ENUM('STRING', 'NUMBER', 'BOOLEAN', 'JSON') | NOT NULL | 'STRING' | 配置类型: STRING-字符串, NUMBER-数字, BOOLEAN-布尔值, JSON-JSON对象 |
 | description | VARCHAR(500) | - | NULL | 配置描述 |
 | category | VARCHAR(50) | - | NULL | 配置分类 |
 | is_public | TINYINT | NOT NULL | 0 | 是否公开: 0-私有, 1-公开 |

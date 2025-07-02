@@ -7,7 +7,16 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: 123456
-  
+
+  # 文件上传配置
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+      file-size-threshold: 0
+      location: ${java.io.tmpdir}
+
   # Flyway数据库迁移配置
   flyway:
     enabled: true
@@ -18,7 +27,7 @@ spring:
     clean-disabled: true
     encoding: UTF-8
     table: flyway_schema_history
-  
+
   # Jackson配置
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
@@ -53,6 +62,35 @@ mybatis-plus:
 jwt:
   secret: xlhealth-jwt-secret-key-2024-very-long-and-secure
   expiration: 86400
+
+# Spring Boot Actuator配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: always
+  health:
+    defaults:
+      enabled: true
+
+# 文件存储配置
+file:
+  upload:
+    # 文件存储路径
+    path: c:/Users/34682/Desktop/xlhealth/uploads
+    # 允许的文件类型
+    allowed-types: jpg,jpeg,png,gif
+    # 最大文件大小（字节）
+    max-size: 10485760
+    # 头像存储子目录
+    avatar-dir: avatars
+    # 访问URL前缀
+    url-prefix: /api/v1/files
 
 # 日志配置
 logging:

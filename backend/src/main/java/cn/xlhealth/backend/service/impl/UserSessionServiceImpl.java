@@ -43,7 +43,7 @@ public class UserSessionServiceImpl implements UserSessionService {
         session.setExpiresAt(LocalDateTime.now().plusSeconds(jwtExpiration));
         session.setLastActivityTime(LocalDateTime.now());
         session.setDeleted(false); // 未删除
-        session.setStatus((byte) 1);  // 有效状态
+        session.setStatus(UserSession.SessionStatus.ACTIVE);  // 有效状态
 
         // 保存会话
         userSessionMapper.insert(session);
@@ -81,14 +81,14 @@ public class UserSessionServiceImpl implements UserSessionService {
         }
         
         // 检查会话是否已经被删除或失效
-        if (Boolean.TRUE.equals(session.getDeleted()) || session.getStatus() == 0) {
+        if (Boolean.TRUE.equals(session.getDeleted()) || session.getStatus() == UserSession.SessionStatus.INVALID) {
             log.warn("用户会话已经失效或已登出: sessionToken={}", sessionToken);
             return false;
         }
         
-        // 逻辑删除：设置deleted=true, status=0
+        // 逻辑删除：设置deleted=true, status=INVALID
         session.setDeleted(true);
-        session.setStatus((byte) 0);
+        session.setStatus(UserSession.SessionStatus.INVALID);
         int result = userSessionMapper.updateById(session);
         boolean success = result > 0;
         
@@ -147,7 +147,7 @@ public class UserSessionServiceImpl implements UserSessionService {
         }
         
         // 检查是否已登出
-        if (Boolean.TRUE.equals(session.getDeleted()) || session.getStatus() == 0) {
+        if (Boolean.TRUE.equals(session.getDeleted()) || session.getStatus() == UserSession.SessionStatus.INVALID) {
             return "LOGGED_OUT";
         }
         

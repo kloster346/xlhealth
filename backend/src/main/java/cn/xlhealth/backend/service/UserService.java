@@ -27,6 +27,7 @@ public interface UserService {
 
     /**
      * 用户登出
+     * 
      * @param sessionToken 会话Token
      * @return 是否成功
      */
@@ -59,7 +60,7 @@ public interface UserService {
     /**
      * 验证密码
      *
-     * @param rawPassword 原始密码
+     * @param rawPassword     原始密码
      * @param encodedPassword 加密密码
      * @return 是否匹配
      */
@@ -85,7 +86,7 @@ public interface UserService {
     /**
      * 更新用户资料
      *
-     * @param userId 用户ID
+     * @param userId  用户ID
      * @param request 更新请求
      * @return 更新后的用户资料
      */
@@ -94,22 +95,11 @@ public interface UserService {
     /**
      * 修改密码
      *
-     * @param userId 用户ID
+     * @param userId  用户ID
      * @param request 修改密码请求
      * @return 是否成功
      */
     boolean changePassword(Long userId, ChangePasswordRequest request);
-
-    /**
-     * 分页查询用户列表
-     *
-     * @param current 当前页
-     * @param size 每页大小
-     * @param keyword 搜索关键词（可选）
-     * @param status 状态筛选（可选）
-     * @return 分页用户列表
-     */
-    PageResponse<UserListDTO> getUserList(Long current, Long size, String keyword, User.UserStatus status);
 
     /**
      * 根据ID获取用户
@@ -120,19 +110,11 @@ public interface UserService {
     User findById(Long userId);
 
     /**
-     * 更新用户状态
+     * 更新用户头像
      *
-     * @param userId 用户ID
-     * @param status 新状态
+     * @param userId    用户ID
+     * @param avatarUrl 头像URL
      * @return 是否成功
      */
-    boolean updateUserStatus(Long userId, User.UserStatus status);
-
-    /**
-     * 删除用户（软删除）
-     *
-     * @param userId 用户ID
-     * @return 是否成功
-     */
-    boolean deleteUser(Long userId);
+    boolean updateUserAvatar(Long userId, String avatarUrl);
 }

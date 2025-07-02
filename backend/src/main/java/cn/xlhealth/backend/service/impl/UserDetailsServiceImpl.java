@@ -1,5 +1,7 @@
 package cn.xlhealth.backend.service.impl;
 
+import cn.xlhealth.backend.mapper.UserMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -14,20 +16,30 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 
+    @Autowired
+    private UserMapper userMapper;
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // TODO: 这里是临时实现，后续需要从数据库中查询用户信息
-        // 在TASK003中会完善用户实体类和用户服务
-        
-        if ("admin".equals(username)) {
-            // 创建一个临时的管理员用户用于测试
-            return User.builder()
-                    .username("admin")
-                    .password("$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG") // password: password
-                    .authorities("ROLE_ADMIN")
-                    .build();
+        // 从数据库查询用户信息
+        cn.xlhealth.backend.entity.User user = userMapper.findByUsername(username);
+
+        if (user == null) {
+            throw new UsernameNotFoundException("用户不存在: " + username);
         }
-        
-        throw new UsernameNotFoundException("用户不存在: " + username);
+
+        // 根据用户名确定角色权限
+        String role = "admin".equals(user.getUsername()) ? "ROLE_ADMIN" : "ROLE_USER";
+
+        // 构建Spring Security的UserDetails对象
+        return User.builder()
+                .username(user.getUsername())
+                .password(user.getPasswordHash())
+                .authorities(role)
+                .accountExpired(false)
+                .accountLocked(user.getStatus() != cn.xlhealth.backend.entity.User.UserStatus.ACTIVE)
+                .credentialsExpired(false)
+                .disabled(Boolean.TRUE.equals(user.getDeleted()))
+                .build();
     }
 }

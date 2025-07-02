@@ -101,5 +101,14 @@ public class UserSession {
      * 会话状态
      */
     @TableField("status")
-    private Byte status;
+    private SessionStatus status;
+
+    /**
+     * 会话状态枚举
+     */
+    public enum SessionStatus {
+        INVALID,    // 已失效
+        ACTIVE,     // 活跃
+        EXPIRED     // 已过期
+    }
 }

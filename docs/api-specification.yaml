@@ -145,10 +145,10 @@ paths:
             schema:
               type: object
               required:
-                - username
+                - usernameOrEmail
                 - password
               properties:
-                username:
+                usernameOrEmail:
                   type: string
                   description: 用户名或邮箱
                   example: user001
@@ -173,11 +173,13 @@ paths:
                       accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
                       tokenType: Bearer
                       expiresIn: 86400
-                      user:
+                      userInfo:
                         id: 1001
                         username: user001
+                        email: user@example.com
                         nickname: 小明
                         avatarUrl: /avatars/user001.jpg
+                        status: ACTIVE
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
@@ -205,6 +207,134 @@ paths:
                     data: null
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/auth/refresh:
+    post:
+      tags:
+        - 用户认证
+      summary: 刷新访问令牌
+      description: 🔐 使用当前令牌刷新获取新的访问令牌
+      responses:
+        "200":
+          description: 刷新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                success:
+                  summary: 刷新成功
+                  value:
+                    code: 0
+                    message: 刷新成功
+                    data:
+                      accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                      tokenType: Bearer
+                      expiresIn: 86400
+                      userInfo:
+                        id: 1001
+                        username: user001
+                        email: user@example.com
+                        nickname: 小明
+                        avatarUrl: /avatars/user001.jpg
+                        status: ACTIVE
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/auth/validate:
+    get:
+      tags:
+        - 用户认证
+      summary: 验证访问令牌
+      description: 🔄 验证当前访问令牌的有效性
+      responses:
+        "200":
+          description: 验证完成
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: boolean
+                        description: 令牌是否有效
+              examples:
+                valid:
+                  summary: 令牌有效
+                  value:
+                    code: 0
+                    message: 令牌有效
+                    data: true
+                invalid:
+                  summary: 令牌无效
+                  value:
+                    code: 0
+                    message: 令牌无效
+                    data: false
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # 健康检查相关接口
+  /api/v1/health:
+    get:
+      tags:
+        - 系统健康检查
+      summary: 健康检查
+      description: 🏥 检查服务运行状态，无需认证
+      responses:
+        "200":
+          description: 服务正常
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                success:
+                  summary: 服务正常
+                  value:
+                    code: 0
+                    message: 服务运行正常
+                    data:
+                      status: UP
+                      timestamp: "2024-01-15T10:30:00"
+                      application: XLHealth Backend
+                      version: "1.0.0"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/health/version:
+    get:
+      tags:
+        - 系统健康检查
+      summary: 版本信息
+      description: 📋 获取应用版本信息
+      responses:
+        "200":
+          description: 版本信息获取成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              examples:
+                success:
+                  summary: 版本信息
+                  value:
+                    code: 0
+                    message: 版本信息
+                    data:
+                      application: XLHealth Backend
+                      version: "1.0.0"
+                      buildTime: "2024-01-01"
+                      springBootVersion: "3.5.0"
+                      javaVersion: "17.0.2"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -258,7 +388,7 @@ paths:
                   example: /avatars/newuser.jpg
                 status:
                   type: string
-                  enum: [ACTIVE, INACTIVE, BANNED]
+                  enum: [ACTIVE, INACTIVE, SUSPENDED, DELETED]
                   description: 账户状态，可选，默认ACTIVE
                   example: ACTIVE
       responses:
@@ -319,8 +449,8 @@ paths:
                       nickname: 小明
                       avatarUrl: /avatars/user001.jpg
                       status: ACTIVE
-                      createdAt: "2024-01-01T10:00:00Z"
-                      lastLoginAt: "2024-01-01T15:30:00Z"
+                      createdTime: "2024-01-01T10:00:00Z"
+                      lastLoginTime: "2024-01-01T15:30:00Z"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
@@ -381,6 +511,203 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "409":
           $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/users/list:
+    get:
+      tags:
+        - 用户管理
+      summary: 分页查询用户列表
+      description: 🔄 分页查询用户列表，支持关键词搜索和状态筛选
+      parameters:
+        - name: current
+          in: query
+          description: 当前页码，从1开始
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: 每页数量
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: keyword
+          in: query
+          description: 搜索关键词（用户名、邮箱、昵称）
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: 用户状态筛选
+          schema:
+            type: string
+            enum: [ACTIVE, INACTIVE, SUSPENDED, DELETED]
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          records:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/UserList"
+                          total:
+                            type: integer
+                            format: int64
+                          size:
+                            type: integer
+                          current:
+                            type: integer
+                          pages:
+                            type: integer
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/users/{userId}/profile:
+    get:
+      tags:
+        - 用户管理
+      summary: 获取指定用户资料
+      description: 🔄 获取指定用户的详细资料信息
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: 用户ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/users/{userId}/status:
+    put:
+      tags:
+        - 用户管理
+      summary: 更新用户状态
+      description: 🔐 更新指定用户的账户状态
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: 用户ID
+          schema:
+            type: integer
+            format: int64
+        - name: status
+          in: query
+          required: true
+          description: 新的用户状态
+          schema:
+            type: string
+            enum: [ACTIVE, INACTIVE, SUSPENDED, DELETED]
+      responses:
+        "200":
+          description: 状态更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/users/{userId}:
+    delete:
+      tags:
+        - 用户管理
+      summary: 删除用户
+      description: 🔐 软删除指定用户（标记为已删除）
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: 用户ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/users/password:
+    put:
+      tags:
+        - 用户管理
+      summary: 修改当前用户密码
+      description: 🔐 修改当前登录用户的密码
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - oldPassword
+                - newPassword
+              properties:
+                oldPassword:
+                  type: string
+                  description: 🔐 当前密码
+                  example: oldpassword123
+                newPassword:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+                  description: 🔐 新密码，至少8位
+                  example: newpassword123
+      responses:
+        "200":
+          description: 密码修改成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -1025,6 +1352,136 @@ components:
           type: integer
           description: 总页数
           example: 5
+        hasNext:
+          type: boolean
+          description: 是否有下一页
+          example: true
+        hasPrevious:
+          type: boolean
+          description: 是否有上一页
+          example: false
+
+    # 请求模型
+    LoginRequest:
+      type: object
+      required:
+        - usernameOrEmail
+        - password
+      properties:
+        usernameOrEmail:
+          type: string
+          description: 用户名或邮箱
+          example: user001
+        password:
+          type: string
+          description: 密码
+          example: Password123
+        rememberMe:
+          type: boolean
+          description: 记住我
+          default: false
+          example: false
+
+    RegisterRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+        - confirmPassword
+      properties:
+        username:
+          type: string
+          description: 用户名（3-20字符，只能包含字母、数字和下划线）
+          minLength: 3
+          maxLength: 20
+          pattern: "^[a-zA-Z0-9_]+$"
+          example: user001
+        email:
+          type: string
+          format: email
+          description: 邮箱地址
+          example: user@example.com
+        password:
+          type: string
+          description: 密码（6-20字符，必须包含大小写字母和数字）
+          minLength: 6
+          maxLength: 20
+          pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d@$!%*?&]{6,}$"
+          example: Password123
+        confirmPassword:
+          type: string
+          description: 确认密码
+          example: Password123
+        nickname:
+          type: string
+          description: 昵称（可选，最多50字符）
+          maxLength: 50
+          example: 小明
+
+    UpdateUserProfileRequest:
+      type: object
+      properties:
+        nickname:
+          type: string
+          description: 昵称
+          maxLength: 50
+          example: 新昵称
+        avatarUrl:
+          type: string
+          description: 头像URL
+          example: /avatars/new-avatar.jpg
+        phone:
+          type: string
+          description: 手机号
+          example: 13800138000
+        gender:
+          type: string
+          enum: [MALE, FEMALE, OTHER]
+          description: 性别
+          example: MALE
+        birthDate:
+          type: string
+          format: date
+          description: 出生日期
+          example: "1990-01-01"
+        profile:
+          type: string
+          description: 个人简介
+          example: 这是我的个人简介
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - oldPassword
+        - newPassword
+        - confirmPassword
+      properties:
+        oldPassword:
+          type: string
+          description: 原密码
+          example: OldPassword123
+        newPassword:
+          type: string
+          description: 新密码
+          minLength: 6
+          maxLength: 20
+          example: NewPassword123
+        confirmPassword:
+          type: string
+          description: 确认新密码
+          example: NewPassword123
+
+    UpdateUserStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, SUSPENDED, DELETED]
+          description: 用户状态
+          example: ACTIVE
 
     User:
       type: object
@@ -1060,20 +1517,20 @@ components:
           example: /avatars/user001.jpg
         status:
           type: string
-          enum: [ACTIVE, INACTIVE, BANNED]
+          enum: [ACTIVE, INACTIVE, SUSPENDED, DELETED]
           description: 账户状态
           example: ACTIVE
-        createdAt:
+        createdTime:
           type: string
           format: date-time
           description: 创建时间
           example: "2024-01-01T10:00:00Z"
-        updatedAt:
+        updatedTime:
           type: string
           format: date-time
           description: 更新时间
           example: "2024-01-01T10:00:00Z"
-        lastLoginAt:
+        lastLoginTime:
           type: string
           format: date-time
           description: 最后登录时间
@@ -1295,3 +1752,5 @@ tags:
     description: 对话消息管理相关接口
   - name: 系统管理
     description: 系统配置和管理相关接口
+  - name: 系统健康检查
+    description: 系统状态检查、版本信息等接口

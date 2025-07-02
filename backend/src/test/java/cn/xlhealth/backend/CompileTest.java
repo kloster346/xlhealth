@@ -59,15 +59,17 @@ public class CompileTest {
         message.setId(1L);
         message.setConversationId(1L);
         message.setUserId(1L);
-        message.setMessageType(Message.MessageType.USER);
+        message.setRole(Message.MessageRole.USER);
         message.setContent("Test message content");
+        message.setContentType(Message.ContentType.TEXT);
+        message.setStatus(Message.MessageStatus.SUCCESS);
         // message.setMetadata("{\"key\": \"value\"}"); // Message实体没有metadata字段
         message.setCreatedTime(LocalDateTime.now());
         message.setDeleted(false);
         
         assertNotNull(message);
         assertEquals("Test message content", message.getContent());
-        assertEquals(Message.MessageType.USER, message.getMessageType());
+        assertEquals(Message.MessageRole.USER, message.getRole());
         
         // 测试SystemConfig实体类
         SystemConfig config = new SystemConfig();
@@ -201,13 +203,15 @@ public class CompileTest {
         message.setId(1L);
         message.setConversationId(1L);
         message.setUserId(1L);
-        message.setMessageType(Message.MessageType.USER);
+        message.setRole(Message.MessageRole.USER);
         message.setContent("Test message");
+        message.setContentType(Message.ContentType.TEXT);
+        message.setStatus(Message.MessageStatus.SUCCESS);
         
         EntityConverter.MessageResponseDto messageDto = EntityConverter.toMessageResponseDto(message);
         assertNotNull(messageDto);
         assertEquals("Test message", messageDto.getContent());
-        assertEquals(Message.MessageType.USER, messageDto.getMessageType());
+        assertEquals(Message.MessageRole.USER, messageDto.getRole());
         
         // 测试批量转换
         List<User> users = Arrays.asList(user);
@@ -254,11 +258,23 @@ public class CompileTest {
         assertNotNull(Conversation.ConversationStatus.ARCHIVED);
         assertNotNull(Conversation.ConversationStatus.DELETED);
         
-        Message.MessageType[] messageTypes = Message.MessageType.values();
-        assertTrue(messageTypes.length > 0);
-        assertNotNull(Message.MessageType.USER);
-        assertNotNull(Message.MessageType.ASSISTANT);
-        assertNotNull(Message.MessageType.SYSTEM);
+        Message.MessageRole[] messageRoles = Message.MessageRole.values();
+        assertTrue(messageRoles.length > 0);
+        assertNotNull(Message.MessageRole.USER);
+        assertNotNull(Message.MessageRole.ASSISTANT);
+        assertNotNull(Message.MessageRole.SYSTEM);
+        
+        Message.ContentType[] contentTypes = Message.ContentType.values();
+        assertTrue(contentTypes.length > 0);
+        assertNotNull(Message.ContentType.TEXT);
+        assertNotNull(Message.ContentType.IMAGE);
+        assertNotNull(Message.ContentType.FILE);
+        
+        Message.MessageStatus[] messageStatuses = Message.MessageStatus.values();
+        assertTrue(messageStatuses.length > 0);
+        assertNotNull(Message.MessageStatus.SUCCESS);
+        assertNotNull(Message.MessageStatus.FAILED);
+        assertNotNull(Message.MessageStatus.PROCESSING);
         
         SystemConfig.ConfigType[] configTypes = SystemConfig.ConfigType.values();
         assertTrue(configTypes.length > 0);

@@ -443,7 +443,9 @@ public class EntityConverter {
         private Long id;
         private Long conversationId;
         private Long userId;
-        private Message.MessageType messageType;
+        private Message.MessageRole role;
+        private Message.ContentType contentType;
+        private Message.MessageStatus status;
         private String content;
         private String metadata;
         private LocalDateTime createdTime;
@@ -474,12 +476,28 @@ public class EntityConverter {
             this.userId = userId;
         }
 
-        public Message.MessageType getMessageType() {
-            return messageType;
+        public Message.MessageRole getRole() {
+            return role;
         }
 
-        public void setMessageType(Message.MessageType messageType) {
-            this.messageType = messageType;
+        public void setRole(Message.MessageRole role) {
+            this.role = role;
+        }
+
+        public Message.ContentType getContentType() {
+            return contentType;
+        }
+
+        public void setContentType(Message.ContentType contentType) {
+            this.contentType = contentType;
+        }
+
+        public Message.MessageStatus getStatus() {
+            return status;
+        }
+
+        public void setStatus(Message.MessageStatus status) {
+            this.status = status;
         }
 
         public String getContent() {

@@ -28,7 +28,7 @@ public class HealthController {
         healthInfo.put("timestamp", LocalDateTime.now());
         healthInfo.put("application", "XLHealth Backend");
         healthInfo.put("version", "1.0.0");
-        
+
         return ApiResponse.success("服务运行正常", healthInfo);
     }
 
@@ -43,7 +43,7 @@ public class HealthController {
         versionInfo.put("buildTime", "2024-01-01");
         versionInfo.put("springBootVersion", "3.5.0");
         versionInfo.put("javaVersion", System.getProperty("java.version"));
-        
+
         return ApiResponse.success("版本信息", versionInfo);
     }
 }
