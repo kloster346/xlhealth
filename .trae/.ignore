@@ -1,0 +1,123 @@
+# Trae AI IDE 忽略文件配置
+# 用于指定 Trae AI 在分析代码时应该忽略的文件和目录
+
+# ===== 构建和依赖目录 =====
+# Maven 构建目录
+target/
+# Node.js 依赖
+node_modules/
+# npm 缓存
+.npm/
+# Yarn 缓存
+.yarn/
+# pnpm 缓存
+.pnpm-store/
+
+# ===== IDE 和编辑器文件 =====
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+# Visual Studio Code
+.vscode/
+# Eclipse
+.project
+.classpath
+.settings/
+# NetBeans
+nbproject/
+
+# ===== 操作系统文件 =====
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+# Linux
+*~
+
+# ===== 日志文件 =====
+*.log
+logs/
+*.log.*
+
+# ===== 临时文件 =====
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# ===== 编译和构建产物 =====
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+dist/
+build/
+out/
+
+# ===== 前端构建产物 =====
+# Vue.js
+dist/
+# React
+build/
+# 通用前端
+*.min.js
+*.min.css
+
+# ===== 数据库文件 =====
+*.db
+*.sqlite
+*.sqlite3
+
+# ===== 配置文件（包含敏感信息） =====
+# 环境变量文件
+.env
+.env.local
+.env.*.local
+# 数据库配置（如果包含密码）
+# application-prod.yml
+# application-prod.properties
+
+# ===== 测试覆盖率报告 =====
+coverage/
+*.lcov
+
+# ===== 包管理器锁文件（可选忽略） =====
+# 如果团队使用不同的包管理器，可以忽略锁文件
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# ===== 文档生成 =====
+# JavaDoc
+doc/
+docs/api/
+
+# ===== 其他常见忽略项 =====
+# 备份文件
+*.bak
+*.backup
+# 压缩文件
+*.zip
+*.tar.gz
+*.rar
+# 大型媒体文件
+*.mp4
+*.avi
+*.mov
+*.mp3
+*.wav
+
+# ===== 项目特定忽略 =====
+# 如果有特定的测试数据或示例文件目录
+# test-data/
+# examples/
+# samples/
