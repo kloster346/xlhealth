@@ -163,9 +163,10 @@ public class AuthController {
             String statusName = "UNKNOWN";
             if (user.getStatus() != null) {
                 switch (user.getStatus()) {
-                    case 0: statusName = "BANNED"; break;
-                    case 1: statusName = "ACTIVE"; break;
-                    case 2: statusName = "INACTIVE"; break;
+                    case ACTIVE: statusName = "ACTIVE"; break;
+                    case INACTIVE: statusName = "INACTIVE"; break;
+                    case SUSPENDED: statusName = "SUSPENDED"; break;
+                    case DELETED: statusName = "DELETED"; break;
                 }
             }
             AuthResponse.UserInfo userInfo = new AuthResponse.UserInfo(

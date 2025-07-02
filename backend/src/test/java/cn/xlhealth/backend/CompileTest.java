@@ -30,14 +30,14 @@ public class CompileTest {
         user.setPasswordHash("hashedpassword");
         user.setNickname("Test User");
         user.setAvatarUrl("http://example.com/avatar.jpg");
-        user.setStatus(1); // 1 表示 ACTIVE 状态
+        user.setStatus(User.UserStatus.ACTIVE);
         user.setCreatedTime(LocalDateTime.now());
         user.setUpdatedTime(LocalDateTime.now());
         user.setLastLoginTime(LocalDateTime.now());
         
         assertNotNull(user);
         assertEquals("testuser", user.getUsername());
-        assertEquals(Integer.valueOf(1), user.getStatus());
+        assertEquals(User.UserStatus.ACTIVE, user.getStatus());
         
         // 测试Conversation实体类
         Conversation conversation = new Conversation();
@@ -46,9 +46,9 @@ public class CompileTest {
         conversation.setTitle("Test Conversation");
         conversation.setStatus(Conversation.ConversationStatus.ACTIVE);
         conversation.setMetadata("{\"key\": \"value\"}");
-        conversation.setCreatedAt(LocalDateTime.now());
-        conversation.setUpdatedAt(LocalDateTime.now());
-        conversation.setLastMessageAt(LocalDateTime.now());
+        conversation.setCreatedTime(LocalDateTime.now());
+        conversation.setUpdatedTime(LocalDateTime.now());
+        conversation.setLastMessageTime(LocalDateTime.now());
         
         assertNotNull(conversation);
         assertEquals("Test Conversation", conversation.getTitle());
@@ -61,9 +61,9 @@ public class CompileTest {
         message.setUserId(1L);
         message.setMessageType(Message.MessageType.USER);
         message.setContent("Test message content");
-        message.setMetadata("{\"key\": \"value\"}");
-        message.setCreatedAt(LocalDateTime.now());
-        message.setIsDeleted(false);
+        // message.setMetadata("{\"key\": \"value\"}"); // Message实体没有metadata字段
+        message.setCreatedTime(LocalDateTime.now());
+        message.setDeleted(false);
         
         assertNotNull(message);
         assertEquals("Test message content", message.getContent());
@@ -75,15 +75,15 @@ public class CompileTest {
         config.setConfigValue("test.value");
         config.setConfigType(SystemConfig.ConfigType.NUMBER);
         config.setDescription("Test configuration");
-        config.setCreatedAt(LocalDateTime.now());
-        config.setUpdatedAt(LocalDateTime.now());
+        config.setCreatedTime(LocalDateTime.now());
+        config.setUpdatedTime(LocalDateTime.now());
         
         assertEquals("test.key", config.getConfigKey());
         assertEquals("test.value", config.getConfigValue());
         assertEquals(SystemConfig.ConfigType.NUMBER, config.getConfigType());
         assertEquals("Test configuration", config.getDescription());
-        assertNotNull(config.getCreatedAt());
-        assertNotNull(config.getUpdatedAt());
+        assertNotNull(config.getCreatedTime());
+        assertNotNull(config.getUpdatedTime());
         
         // 测试AuditLog实体类
         AuditLog auditLog = new AuditLog();
@@ -95,7 +95,7 @@ public class CompileTest {
         auditLog.setOldValues("{}");
         auditLog.setNewValues("{\"name\":\"test\"}");
         auditLog.setIpAddress("192.168.1.1");
-        auditLog.setCreatedAt(LocalDateTime.now());
+        auditLog.setCreatedTime(LocalDateTime.now());
         
         assertNotNull(auditLog.getId());
         assertEquals(Long.valueOf(1L), auditLog.getUserId());
@@ -105,7 +105,7 @@ public class CompileTest {
         assertEquals("{}", auditLog.getOldValues());
         assertEquals("{\"name\":\"test\"}", auditLog.getNewValues());
         assertEquals("192.168.1.1", auditLog.getIpAddress());
-        assertNotNull(auditLog.getCreatedAt());
+        assertNotNull(auditLog.getCreatedTime());
         
         // 测试UserSession实体类
         UserSession session = new UserSession();
@@ -115,7 +115,7 @@ public class CompileTest {
         session.setUserAgent("Test Agent");
         session.setCreatedTime(LocalDateTime.now());
         session.setExpiresAt(LocalDateTime.now().plusHours(24));
-        session.setLastAccessedAt(LocalDateTime.now());
+        session.setLastActivityTime(LocalDateTime.now());
         
         assertEquals("session123", session.getSessionToken());
         assertEquals(Long.valueOf(1L), session.getUserId());
@@ -123,7 +123,7 @@ public class CompileTest {
         assertEquals("Test Agent", session.getUserAgent());
         assertNotNull(session.getCreatedTime());
         assertNotNull(session.getExpiresAt());
-        assertNotNull(session.getLastAccessedAt());
+        assertNotNull(session.getLastActivityTime());
     }
     
     @Test
@@ -163,7 +163,7 @@ public class CompileTest {
         user.setEmail("test@example.com");
         user.setPasswordHash("hashedpassword");
         user.setNickname("Test User");
-        user.setStatus(1); // 1 表示 ACTIVE 状态
+        user.setStatus(User.UserStatus.ACTIVE);
         user.setCreatedTime(LocalDateTime.now());
         
         // 测试用户实体转换
@@ -246,7 +246,7 @@ public class CompileTest {
         assertTrue(userStatuses.length > 0);
         assertNotNull(User.UserStatus.ACTIVE);
         assertNotNull(User.UserStatus.INACTIVE);
-        assertNotNull(User.UserStatus.BANNED);
+        assertNotNull(User.UserStatus.SUSPENDED);
         
         Conversation.ConversationStatus[] conversationStatuses = Conversation.ConversationStatus.values();
         assertTrue(conversationStatuses.length > 0);
@@ -257,7 +257,7 @@ public class CompileTest {
         Message.MessageType[] messageTypes = Message.MessageType.values();
         assertTrue(messageTypes.length > 0);
         assertNotNull(Message.MessageType.USER);
-        assertNotNull(Message.MessageType.AI);
+        assertNotNull(Message.MessageType.ASSISTANT);
         assertNotNull(Message.MessageType.SYSTEM);
         
         SystemConfig.ConfigType[] configTypes = SystemConfig.ConfigType.values();

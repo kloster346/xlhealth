@@ -1,9 +1,8 @@
 package cn.xlhealth.backend.service;
 
 import cn.xlhealth.backend.entity.User;
-import cn.xlhealth.backend.ui.dto.AuthResponse;
-import cn.xlhealth.backend.ui.dto.LoginRequest;
-import cn.xlhealth.backend.ui.dto.RegisterRequest;
+import cn.xlhealth.backend.ui.dto.*;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 /**
  * 用户服务接口
@@ -72,4 +71,68 @@ public interface UserService {
      * @param userId 用户ID
      */
     void updateLastLoginTime(Long userId);
+
+    // ========== TASK005: 用户管理接口 ==========
+
+    /**
+     * 获取用户资料
+     *
+     * @param userId 用户ID
+     * @return 用户资料DTO
+     */
+    UserProfileDTO getUserProfile(Long userId);
+
+    /**
+     * 更新用户资料
+     *
+     * @param userId 用户ID
+     * @param request 更新请求
+     * @return 更新后的用户资料
+     */
+    UserProfileDTO updateUserProfile(Long userId, UpdateUserProfileRequest request);
+
+    /**
+     * 修改密码
+     *
+     * @param userId 用户ID
+     * @param request 修改密码请求
+     * @return 是否成功
+     */
+    boolean changePassword(Long userId, ChangePasswordRequest request);
+
+    /**
+     * 分页查询用户列表
+     *
+     * @param current 当前页
+     * @param size 每页大小
+     * @param keyword 搜索关键词（可选）
+     * @param status 状态筛选（可选）
+     * @return 分页用户列表
+     */
+    PageResponse<UserListDTO> getUserList(Long current, Long size, String keyword, User.UserStatus status);
+
+    /**
+     * 根据ID获取用户
+     *
+     * @param userId 用户ID
+     * @return 用户实体
+     */
+    User findById(Long userId);
+
+    /**
+     * 更新用户状态
+     *
+     * @param userId 用户ID
+     * @param status 新状态
+     * @return 是否成功
+     */
+    boolean updateUserStatus(Long userId, User.UserStatus status);
+
+    /**
+     * 删除用户（软删除）
+     *
+     * @param userId 用户ID
+     * @return 是否成功
+     */
+    boolean deleteUser(Long userId);
 }

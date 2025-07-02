@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -58,7 +59,37 @@ public class User {
      * 账户状态
      */
     @TableField("status")
-    private Integer status;
+    private UserStatus status;
+
+    /**
+     * 手机号
+     */
+    @TableField("phone")
+    private String phone;
+
+    /**
+     * 性别
+     */
+    @TableField("gender")
+    private Gender gender;
+
+    /**
+     * 出生日期
+     */
+    @TableField("birth_date")
+    private LocalDate birthDate;
+
+    /**
+     * 个人简介
+     */
+    @TableField("profile")
+    private String profile;
+
+    /**
+     * 最后登录IP
+     */
+    @TableField("last_login_ip")
+    private String lastLoginIp;
 
     /**
      * 创建时间
@@ -79,11 +110,28 @@ public class User {
     private LocalDateTime lastLoginTime;
 
     /**
+     * 是否删除
+     */
+    @TableField("deleted")
+    @TableLogic
+    private Boolean deleted;
+
+    /**
      * 用户状态枚举
      */
     public enum UserStatus {
-        ACTIVE,     // 活跃
-        INACTIVE,   // 非活跃
-        BANNED      // 被禁用
+        ACTIVE,     // 激活
+        INACTIVE,   // 未激活
+        SUSPENDED,  // 暂停
+        DELETED     // 删除
+    }
+
+    /**
+     * 性别枚举
+     */
+    public enum Gender {
+        MALE,       // 男性
+        FEMALE,     // 女性
+        OTHER       // 其他
     }
 }

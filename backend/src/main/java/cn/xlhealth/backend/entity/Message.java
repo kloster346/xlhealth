@@ -40,36 +40,105 @@ public class Message {
     private MessageType messageType;
 
     /**
+     * 消息角色
+     */
+    @TableField("role")
+    private MessageRole role;
+
+    /**
      * 消息内容
      */
     @TableField("content")
     private String content;
 
     /**
-     * 消息元数据（JSON格式）
+     * 内容类型
      */
-    @TableField("metadata")
-    private String metadata;
+    @TableField("content_type")
+    private String contentType;
+
+    /**
+     * token数量
+     */
+    @TableField("token_count")
+    private Integer tokenCount;
+
+    /**
+     * 模型名称
+     */
+    @TableField("model_name")
+    private String modelName;
+
+    /**
+     * 提示token数
+     */
+    @TableField("prompt_tokens")
+    private Integer promptTokens;
+
+    /**
+     * 完成token数
+     */
+    @TableField("completion_tokens")
+    private Integer completionTokens;
+
+    /**
+     * 总token数
+     */
+    @TableField("total_tokens")
+    private Integer totalTokens;
+
+    /**
+     * 响应时间(毫秒)
+     */
+    @TableField("response_time")
+    private Long responseTime;
+
+    /**
+     * 消息状态
+     */
+    @TableField("status")
+    private Byte status;
+
+    /**
+     * 错误信息
+     */
+    @TableField("error_message")
+    private String errorMessage;
 
     /**
      * 创建时间
      */
-    @TableField(value = "created_at", fill = FieldFill.INSERT)
-    private LocalDateTime createdAt;
+    @TableField(value = "created_time", fill = FieldFill.INSERT)
+    private LocalDateTime createdTime;
 
     /**
-     * 是否已删除
+     * 更新时间
      */
-    @TableField("is_deleted")
+    @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedTime;
+
+    /**
+     * 是否删除
+     */
+    @TableField("deleted")
     @TableLogic
-    private Boolean isDeleted;
+    private Boolean deleted;
 
     /**
      * 消息类型枚举
      */
     public enum MessageType {
         USER,       // 用户消息
-        AI,         // AI回复
+        ASSISTANT,  // 助手消息
         SYSTEM      // 系统消息
+    }
+
+    /**
+     * 消息角色枚举
+     */
+    public enum MessageRole {
+        USER,       // 用户
+        ASSISTANT,  // 助手
+        SYSTEM      // 系统
     }
 }

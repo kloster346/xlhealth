@@ -61,15 +61,56 @@ public class AuditLog {
     private String newValues;
 
     /**
-     * 操作IP
+     * IP地址
      */
-    @JsonIgnore
     @TableField("ip_address")
     private String ipAddress;
 
     /**
-     * 操作时间
+     * 用户代理
      */
-    @TableField(value = "created_at", fill = FieldFill.INSERT)
-    private LocalDateTime createdAt;
+    @TableField("user_agent")
+    private String userAgent;
+
+    /**
+     * 请求方法
+     */
+    @TableField("request_method")
+    private String requestMethod;
+
+    /**
+     * 请求URL
+     */
+    @TableField("request_url")
+    private String requestUrl;
+
+    /**
+     * 请求参数
+     */
+    @TableField("request_params")
+    private String requestParams;
+
+    /**
+     * 响应状态
+     */
+    @TableField("response_status")
+    private Integer responseStatus;
+
+    /**
+     * 执行时间(毫秒)
+     */
+    @TableField("execution_time")
+    private Long executionTime;
+
+    /**
+     * 错误信息
+     */
+    @TableField("error_message")
+    private String errorMessage;
+
+    /**
+     * 创建时间
+     */
+    @TableField(value = "created_time", fill = FieldFill.INSERT)
+    private LocalDateTime createdTime;
 }

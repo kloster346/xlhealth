@@ -8,17 +8,23 @@ import java.time.LocalDateTime;
 
 /**
  * 系统配置实体类
- * 对应数据库表：system_config
+ * 对应数据库表：system_configs
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("system_config")
+@TableName("system_configs")
 public class SystemConfig {
+
+    /**
+     * 主键ID
+     */
+    @TableId(value = "id", type = IdType.AUTO)
+    private Long id;
 
     /**
      * 配置键名
      */
-    @TableId(value = "config_key", type = IdType.INPUT)
+    @TableField("config_key")
     private String configKey;
 
     /**
@@ -26,6 +32,12 @@ public class SystemConfig {
      */
     @TableField("config_value")
     private String configValue;
+
+    /**
+     * 配置分类
+     */
+    @TableField("category")
+    private String category;
 
     /**
      * 配置描述
@@ -40,16 +52,41 @@ public class SystemConfig {
     private ConfigType configType;
 
     /**
+     * 是否公开
+     */
+    @TableField("is_public")
+    private Boolean isPublic;
+
+    /**
+     * 是否可编辑
+     */
+    @TableField("is_editable")
+    private Boolean isEditable;
+
+    /**
+     * 排序顺序
+     */
+    @TableField("sort_order")
+    private Integer sortOrder;
+
+    /**
      * 创建时间
      */
-    @TableField(value = "created_at", fill = FieldFill.INSERT)
-    private LocalDateTime createdAt;
+    @TableField(value = "created_time", fill = FieldFill.INSERT)
+    private LocalDateTime createdTime;
 
     /**
      * 更新时间
      */
-    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updatedAt;
+    @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedTime;
+
+    /**
+     * 是否删除
+     */
+    @TableField("deleted")
+    @TableLogic
+    private Boolean deleted;
 
     /**
      * 配置类型枚举

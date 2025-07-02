@@ -206,9 +206,9 @@ public class EntityConverter {
         private String nickname;
         private String avatarUrl;
         private User.UserStatus status;
-        private LocalDateTime createdAt;
-        private LocalDateTime updatedAt;
-        private LocalDateTime lastLoginAt;
+        private LocalDateTime createdTime;
+        private LocalDateTime updatedTime;
+        private LocalDateTime lastLoginTime;
 
         // Getters and Setters
         public Long getId() {
@@ -267,28 +267,28 @@ public class EntityConverter {
             this.status = status;
         }
 
-        public LocalDateTime getCreatedAt() {
-            return createdAt;
+        public LocalDateTime getCreatedTime() {
+            return createdTime;
         }
 
-        public void setCreatedAt(LocalDateTime createdAt) {
-            this.createdAt = createdAt;
+        public void setCreatedTime(LocalDateTime createdTime) {
+            this.createdTime = createdTime;
         }
 
-        public LocalDateTime getUpdatedAt() {
-            return updatedAt;
+        public LocalDateTime getUpdatedTime() {
+            return updatedTime;
         }
 
-        public void setUpdatedAt(LocalDateTime updatedAt) {
-            this.updatedAt = updatedAt;
+        public void setUpdatedTime(LocalDateTime updatedTime) {
+            this.updatedTime = updatedTime;
         }
 
-        public LocalDateTime getLastLoginAt() {
-            return lastLoginAt;
+        public LocalDateTime getLastLoginTime() {
+            return lastLoginTime;
         }
 
-        public void setLastLoginAt(LocalDateTime lastLoginAt) {
-            this.lastLoginAt = lastLoginAt;
+        public void setLastLoginTime(LocalDateTime lastLoginTime) {
+            this.lastLoginTime = lastLoginTime;
         }
     }
 
@@ -347,9 +347,9 @@ public class EntityConverter {
         private String title;
         private Conversation.ConversationStatus status;
         private String metadata;
-        private LocalDateTime createdAt;
-        private LocalDateTime updatedAt;
-        private LocalDateTime lastMessageAt;
+        private LocalDateTime createdTime;
+        private LocalDateTime updatedTime;
+        private LocalDateTime lastMessageTime;
 
         // Getters and Setters
         public Long getId() {
@@ -392,28 +392,28 @@ public class EntityConverter {
             this.metadata = metadata;
         }
 
-        public LocalDateTime getCreatedAt() {
-            return createdAt;
+        public LocalDateTime getCreatedTime() {
+            return createdTime;
         }
 
-        public void setCreatedAt(LocalDateTime createdAt) {
-            this.createdAt = createdAt;
+        public void setCreatedTime(LocalDateTime createdTime) {
+            this.createdTime = createdTime;
         }
 
-        public LocalDateTime getUpdatedAt() {
-            return updatedAt;
+        public LocalDateTime getUpdatedTime() {
+            return updatedTime;
         }
 
-        public void setUpdatedAt(LocalDateTime updatedAt) {
-            this.updatedAt = updatedAt;
+        public void setUpdatedTime(LocalDateTime updatedTime) {
+            this.updatedTime = updatedTime;
         }
 
-        public LocalDateTime getLastMessageAt() {
-            return lastMessageAt;
+        public LocalDateTime getLastMessageTime() {
+            return lastMessageTime;
         }
 
-        public void setLastMessageAt(LocalDateTime lastMessageAt) {
-            this.lastMessageAt = lastMessageAt;
+        public void setLastMessageTime(LocalDateTime lastMessageTime) {
+            this.lastMessageTime = lastMessageTime;
         }
     }
 
@@ -446,8 +446,8 @@ public class EntityConverter {
         private Message.MessageType messageType;
         private String content;
         private String metadata;
-        private LocalDateTime createdAt;
-        private Boolean isDeleted;
+        private LocalDateTime createdTime;
+        private Boolean deleted;
 
         // Getters and Setters
         public Long getId() {
@@ -498,20 +498,20 @@ public class EntityConverter {
             this.metadata = metadata;
         }
 
-        public LocalDateTime getCreatedAt() {
-            return createdAt;
+        public LocalDateTime getCreatedTime() {
+            return createdTime;
         }
 
-        public void setCreatedAt(LocalDateTime createdAt) {
-            this.createdAt = createdAt;
+        public void setCreatedTime(LocalDateTime createdTime) {
+            this.createdTime = createdTime;
         }
 
-        public Boolean getIsDeleted() {
-            return isDeleted;
+        public Boolean getDeleted() {
+            return deleted;
         }
 
-        public void setIsDeleted(Boolean isDeleted) {
-            this.isDeleted = isDeleted;
+        public void setDeleted(Boolean deleted) {
+            this.deleted = deleted;
         }
     }
 
@@ -543,8 +543,8 @@ public class EntityConverter {
         private String configValue;
         private SystemConfig.ConfigType configType;
         private String description;
-        private LocalDateTime createdAt;
-        private LocalDateTime updatedAt;
+        private LocalDateTime createdTime;
+        private LocalDateTime updatedTime;
 
         // Getters and Setters
         public Long getId() {
@@ -587,20 +587,20 @@ public class EntityConverter {
             this.description = description;
         }
 
-        public LocalDateTime getCreatedAt() {
-            return createdAt;
+        public LocalDateTime getCreatedTime() {
+            return createdTime;
         }
 
-        public void setCreatedAt(LocalDateTime createdAt) {
-            this.createdAt = createdAt;
+        public void setCreatedTime(LocalDateTime createdTime) {
+            this.createdTime = createdTime;
         }
 
-        public LocalDateTime getUpdatedAt() {
-            return updatedAt;
+        public LocalDateTime getUpdatedTime() {
+            return updatedTime;
         }
 
-        public void setUpdatedAt(LocalDateTime updatedAt) {
-            this.updatedAt = updatedAt;
+        public void setUpdatedTime(LocalDateTime updatedTime) {
+            this.updatedTime = updatedTime;
         }
     }
 
@@ -653,7 +653,7 @@ public class EntityConverter {
         private String details;
         private String ipAddress;
         private String userAgent;
-        private LocalDateTime createdAt;
+        private LocalDateTime createdTime;
 
         // Getters and Setters
         public Long getId() {
@@ -720,12 +720,12 @@ public class EntityConverter {
             this.userAgent = userAgent;
         }
 
-        public LocalDateTime getCreatedAt() {
-            return createdAt;
+        public LocalDateTime getCreatedTime() {
+            return createdTime;
         }
 
-        public void setCreatedAt(LocalDateTime createdAt) {
-            this.createdAt = createdAt;
+        public void setCreatedTime(LocalDateTime createdTime) {
+            this.createdTime = createdTime;
         }
     }
 
@@ -735,7 +735,7 @@ public class EntityConverter {
         private String sessionToken;
         private String ipAddress;
         private String userAgent;
-        private LocalDateTime createdAt;
+        private LocalDateTime createdTime;
         private LocalDateTime expiresAt;
         private Boolean isActive;
 
@@ -780,12 +780,12 @@ public class EntityConverter {
             this.userAgent = userAgent;
         }
 
-        public LocalDateTime getCreatedAt() {
-            return createdAt;
+        public LocalDateTime getCreatedTime() {
+            return createdTime;
         }
 
-        public void setCreatedAt(LocalDateTime createdAt) {
-            this.createdAt = createdAt;
+        public void setCreatedTime(LocalDateTime createdTime) {
+            this.createdTime = createdTime;
         }
 
         public LocalDateTime getExpiresAt() {

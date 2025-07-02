@@ -1,38 +1,40 @@
-# 认证接口测试指南
+# XLHealth 用户管理接口测试指南
 
-## 测试环境
-- 服务器地址: http://localhost:8081
-- 基础路径: /api/v1/auth
+## 概述
 
-## 接口测试
+本文档提供了 XLHealth AI 心理咨询系统用户管理接口的详细测试指南，包括认证接口和用户管理接口的测试方法。
 
-### 1. 用户注册接口
-**POST** `/api/v1/auth/register`
+## 基础信息
 
-**请求头:**
-```
-Content-Type: application/json
-```
+- **服务器地址**: `http://localhost:8081`
+- **API 前缀**: `/api`
+- **认证方式**: Bearer Token (JWT)
+- **内容类型**: `application/json`
 
-**请求体:**
+## 1. 认证接口测试
+
+### 1.1 用户注册
+
+**接口**: `POST /api/auth/register`
+
+**请求体**:
 ```json
 {
   "username": "testuser",
   "email": "test@example.com",
-  "password": "Test123456",
-  "confirmPassword": "Test123456",
+  "password": "123456",
+  "confirmPassword": "123456",
   "nickname": "测试用户"
 }
 ```
 
-**预期响应:**
+**预期响应**:
 ```json
 {
   "success": true,
-  "code": "SUCCESS",
-  "message": "注册成功",
+  "message": "用户注册成功",
   "data": {
-    "accessToken": "eyJ...",
+    "token": "eyJhbGciOiJIUzI1NiJ9...",
     "tokenType": "Bearer",
     "expiresIn": 86400,
     "userInfo": {
@@ -43,324 +45,323 @@ Content-Type: application/json
       "avatarUrl": null,
       "status": "ACTIVE"
     }
-  },
-  "timestamp": "2025-07-01T20:16:24"
+  }
 }
 ```
 
-### 2. 用户登录接口
-**POST** `/api/v1/auth/login`
+### 1.2 用户登录
 
-**请求头:**
-```
-Content-Type: application/json
-```
+**接口**: `POST /api/auth/login`
 
-**请求体:**
+**请求体**:
 ```json
 {
   "usernameOrEmail": "testuser",
-  "password": "Test123456",
-  "rememberMe": false
+  "password": "123456"
 }
 ```
 
-**预期响应:**
+**预期响应**: 同注册接口
+
+### 1.3 用户登出
+
+**接口**: `POST /api/auth/logout`
+
+**请求头**: `Authorization: Bearer {token}`
+
+**预期响应**:
 ```json
 {
   "success": true,
-  "code": "SUCCESS",
-  "message": "登录成功",
-  "data": {
-    "accessToken": "eyJ...",
-    "tokenType": "Bearer",
-    "expiresIn": 86400,
-    "userInfo": {
-      "id": 1,
-      "username": "testuser",
-      "email": "test@example.com",
-      "nickname": "测试用户",
-      "avatarUrl": null,
-      "status": "ACTIVE"
-    }
-  },
-  "timestamp": "2025-07-01T20:16:24"
-}
-```
-
-### 3. Token验证接口
-**GET** `/api/v1/auth/validate`
-
-**请求头:**
-```
-Authorization: Bearer {从登录接口获取的token}
-```
-
-**预期响应:**
-```json
-{
-  "success": true,
-  "code": "SUCCESS",
-  "message": "令牌有效",
-  "data": true,
-  "timestamp": "2025-07-01T20:16:24"
-}
-```
-
-### 4. 用户登出接口
-**POST** `/api/v1/auth/logout`
-
-**请求头:**
-```
-Authorization: Bearer {从登录接口获取的token}
-```
-
-**成功响应（首次登出）:**
-```json
-{
-  "success": true,
-  "code": "SUCCESS",
   "message": "登出成功",
-  "data": "登出成功",
-  "timestamp": "2025-07-01T20:16:24"
+  "data": null
 }
 ```
 
-**错误响应（重复登出）:**
-```json
-{
-  "success": false,
-  "code": "ALREADY_LOGGED_OUT",
-  "message": "用户已经登出，无需重复操作",
-  "data": null,
-  "timestamp": "2025-07-01T20:16:24"
-}
-```
+## 2. 用户管理接口测试
 
-**错误响应（会话不存在）:**
-```json
-{
-  "success": false,
-  "code": "SESSION_NOT_FOUND",
-  "message": "会话不存在",
-  "data": null,
-  "timestamp": "2025-07-01T20:16:24"
-}
-```
+> **注意**: 以下所有接口都需要在请求头中添加 `Authorization: Bearer {token}`
 
-**错误响应（会话已过期）:**
-```json
-{
-  "success": false,
-  "code": "SESSION_EXPIRED",
-  "message": "会话已过期",
-  "data": null,
-  "timestamp": "2025-07-01T20:16:24"
-}
-```
+### 2.1 获取当前用户资料
 
-### 5. Token刷新接口
-**POST** `/api/v1/auth/refresh`
+**接口**: `GET /api/users/profile`
 
-**请求头:**
-```
-Authorization: Bearer {从登录接口获取的token}
-```
+**请求头**: `Authorization: Bearer {token}`
 
-**请求体:**
-```json
-{
-  "refreshToken": "0e86ccc555a347a..." // 可选，如果不提供则使用会话中存储的refreshToken
-}
-```
-
-**预期响应:**
+**预期响应**:
 ```json
 {
   "success": true,
-  "code": "SUCCESS",
-  "message": "刷新成功",
+  "message": "获取用户资料成功",
   "data": {
-    "accessToken": "eyJ...", // 新的访问令牌
-    "refreshToken": "0f8221ac0ecf4c03...", // 新的刷新令牌
-    "tokenType": "Bearer",
-    "expiresIn": 86400,
-    "userInfo": {
-      "id": 1,
-      "username": "testuser",
-      "email": "test@example.com",
-      "nickname": "测试用户",
-      "avatarUrl": null,
-      "status": "ACTIVE"
-    }
-  },
-  "timestamp": "2025-07-01T20:16:24"
+    "id": 1,
+    "username": "testuser",
+    "email": "test@example.com",
+    "nickname": "测试用户",
+    "avatarUrl": null,
+    "status": 1,
+    "statusDescription": "活跃",
+    "createdTime": "2024-01-01T10:00:00",
+    "lastLoginTime": "2024-01-01T10:30:00"
+  }
 }
 ```
 
-**错误响应（刷新令牌无效）:**
+### 2.2 获取指定用户资料
+
+**接口**: `GET /api/users/{userId}/profile`
+
+**路径参数**: `userId` - 用户ID
+
+**请求头**: `Authorization: Bearer {token}`
+
+**示例**: `GET /api/users/1/profile`
+
+**预期响应**: 同获取当前用户资料
+
+### 2.3 更新当前用户资料
+
+**接口**: `PUT /api/users/profile`
+
+**请求头**: `Authorization: Bearer {token}`
+
+**请求体**:
+```json
+{
+  "email": "newemail@example.com",
+  "nickname": "新昵称",
+  "avatarUrl": "https://example.com/avatar.jpg"
+}
+```
+
+**预期响应**:
+```json
+{
+  "success": true,
+  "message": "用户资料更新成功",
+  "data": {
+    "id": 1,
+    "username": "testuser",
+    "email": "newemail@example.com",
+    "nickname": "新昵称",
+    "avatarUrl": "https://example.com/avatar.jpg",
+    "status": 1,
+    "statusDescription": "活跃",
+    "createdTime": "2024-01-01T10:00:00",
+    "lastLoginTime": "2024-01-01T10:30:00"
+  }
+}
+```
+
+### 2.4 修改密码
+
+**接口**: `PUT /api/users/password`
+
+**请求头**: `Authorization: Bearer {token}`
+
+**请求体**:
+```json
+{
+  "currentPassword": "123456",
+  "newPassword": "newpassword123",
+  "confirmPassword": "newpassword123"
+}
+```
+
+**预期响应**:
+```json
+{
+  "success": true,
+  "message": "密码修改成功",
+  "data": null
+}
+```
+
+### 2.5 分页查询用户列表
+
+**接口**: `GET /api/users/list`
+
+**请求头**: `Authorization: Bearer {token}`
+
+**查询参数**:
+- `current` (可选): 当前页码，默认 1
+- `size` (可选): 每页大小，默认 10
+- `keyword` (可选): 搜索关键词（用户名、邮箱、昵称）
+- `status` (可选): 状态筛选（0=被禁用, 1=活跃, 2=非活跃）
+
+**示例**: `GET /api/users/list?current=1&size=10&keyword=test&status=1`
+
+**预期响应**:
+```json
+{
+  "success": true,
+  "message": "查询用户列表成功",
+  "data": {
+    "records": [
+      {
+        "id": 1,
+        "username": "testuser",
+        "email": "test@example.com",
+        "nickname": "测试用户",
+        "avatarUrl": null,
+        "status": 1,
+        "createdTime": "2024-01-01T10:00:00",
+        "lastLoginTime": "2024-01-01T10:30:00"
+      }
+    ],
+    "total": 1,
+    "current": 1,
+    "size": 10,
+    "pages": 1,
+    "hasNext": false,
+    "hasPrevious": false
+  }
+}
+```
+
+### 2.6 更新用户状态
+
+**接口**: `PUT /api/users/{userId}/status`
+
+**请求头**: `Authorization: Bearer {token}`
+
+**路径参数**: `userId` - 用户ID
+
+**查询参数**: `status` - 新状态（0=被禁用, 1=活跃, 2=非活跃）
+
+**示例**: `PUT /api/users/1/status?status=0`
+
+**预期响应**:
+```json
+{
+  "success": true,
+  "message": "用户状态更新成功",
+  "data": null
+}
+```
+
+### 2.7 删除用户（软删除）
+
+**接口**: `DELETE /api/users/{userId}`
+
+**请求头**: `Authorization: Bearer {token}`
+
+**路径参数**: `userId` - 用户ID
+
+**示例**: `DELETE /api/users/1`
+
+**预期响应**:
+```json
+{
+  "success": true,
+  "message": "用户删除成功",
+  "data": null
+}
+```
+
+## 3. 测试流程建议
+
+### 3.1 基础测试流程
+
+1. **注册新用户** → 获取 token
+2. **登录用户** → 验证 token 有效性
+3. **获取用户资料** → 验证用户信息
+4. **更新用户资料** → 验证更新功能
+5. **修改密码** → 验证密码修改
+6. **查询用户列表** → 验证分页和搜索
+7. **登出用户** → 验证登出功能
+
+### 3.2 边界测试
+
+1. **无效 token 测试**:
+   - 不提供 Authorization 头
+   - 提供过期的 token
+   - 提供格式错误的 token
+
+2. **参数验证测试**:
+   - 邮箱格式验证
+   - 密码长度验证
+   - 必填字段验证
+
+3. **业务逻辑测试**:
+   - 重复邮箱注册
+   - 错误密码登录
+   - 修改密码时当前密码错误
+   - 新密码与确认密码不一致
+
+## 4. 错误响应格式
+
+所有错误响应都遵循以下格式：
+
 ```json
 {
   "success": false,
-  "code": "INVALID_REFRESH_TOKEN",
-  "message": "刷新令牌无效或已过期",
+  "message": "错误描述",
   "data": null,
-  "timestamp": "2025-07-01T20:16:24"
+  "timestamp": "2024-01-01T10:00:00"
 }
 ```
 
-**错误响应（会话已过期）:**
-```json
-{
-  "success": false,
-  "code": "SESSION_EXPIRED",
-  "message": "会话已过期，请重新登录",
-  "data": null,
-  "timestamp": "2025-07-01T20:16:24"
+## 5. 状态码说明
+
+- **200**: 请求成功
+- **400**: 请求参数错误
+- **401**: 未授权（token 无效或过期）
+- **403**: 权限不足
+- **404**: 资源不存在
+- **500**: 服务器内部错误
+
+## 6. Apifox 配置建议
+
+### 6.1 环境变量设置
+
+在 Apifox 中设置以下环境变量：
+
+- `baseUrl`: `http://localhost:8080`
+- `token`: 登录后获取的 JWT token
+
+### 6.2 全局请求头
+
+为需要认证的接口设置全局请求头：
+
+```
+Authorization: Bearer {{token}}
+Content-Type: application/json
+```
+
+### 6.3 前置脚本
+
+可以在登录接口的后置脚本中自动保存 token：
+
+```javascript
+// 登录接口后置脚本
+if (pm.response.json().success) {
+    pm.environment.set("token", pm.response.json().data.token);
 }
 ```
 
-## 测试步骤
+## 7. 注意事项
 
-1. **首先测试注册接口**
-   - 使用Apifox发送注册请求
-   - 检查响应是否包含token和用户信息
-   - 保存返回的token用于后续测试
+1. 确保后端服务已启动并运行在 `http://localhost:8080`
+2. 数据库连接正常，用户表已创建
+3. 测试前请先注册用户或使用已有用户登录获取 token
+4. 某些接口可能需要管理员权限，请根据实际业务需求调整
+5. 建议使用不同的测试数据避免数据冲突
 
-2. **测试登录接口**
-   - 使用相同的用户名和密码登录
-   - 验证返回的token和用户信息
+## 8. 常见问题
 
-3. **测试token验证接口**
-   - 使用获取到的token调用验证接口
-   - 确认返回true表示token有效
+### Q1: 401 Unauthorized 错误
+**A**: 检查 Authorization 头是否正确设置，token 是否有效
 
-4. **测试登出接口**
-   - 使用有效token调用登出接口，确认返回"登出成功"
-   - 立即使用相同token再次调用登出接口，确认返回"用户已经登出，无需重复操作"
-   - 使用已登出的token访问其他需要认证的接口，确认返回401错误
-   - 使用过期token调用登出接口，确认返回"会话已过期"
-   - 使用不存在的token调用登出接口，确认返回"会话不存在"
+### Q2: 400 Bad Request 错误
+**A**: 检查请求参数格式和必填字段
 
-5. **测试token刷新接口**
-   - 使用有效token调用刷新接口
-   - 验证返回新的访问令牌(accessToken)和刷新令牌(refreshToken)
-   - 使用新的访问令牌访问需要认证的接口，确认能够正常访问
-   - 等待一段时间后（但不超过刷新令牌的有效期），再次使用刷新令牌获取新的访问令牌
-   - 测试使用旧的刷新令牌是否会返回错误（刷新令牌通常是一次性使用）
+### Q3: 500 Internal Server Error
+**A**: 检查后端日志，可能是数据库连接或业务逻辑错误
 
-## 错误测试
+### Q4: 跨域问题
+**A**: 确保前端请求域名在后端 CORS 配置中允许
 
-1. **注册时使用重复用户名**
-2. **登录时使用错误密码**
-3. **使用无效token访问需要认证的接口**
-4. **不提供token访问需要认证的接口**
-5. **登出接口错误测试**
-   - 重复登出测试（应返回ALREADY_LOGGED_OUT）
-   - 使用过期token登出（应返回SESSION_EXPIRED）
-   - 使用不存在的token登出（应返回SESSION_NOT_FOUND）
-   - 不提供token调用登出接口（应返回UNAUTHORIZED）
+---
 
-## 测试说明
-
-### 重要说明：JWT + Session 混合认证机制
-
-本系统采用 JWT + Session 混合认证机制，专为心理健康咨询平台的安全需求设计：
-
-1. **双重安全保障**：JWT 提供无状态认证，Session 表提供安全控制和审计功能
-2. **真正的登出**：登出时会删除服务端 session 记录，实现真正的会话终止
-3. **设备管理**：记录用户登录的 IP 地址、设备信息，支持多设备管理
-4. **安全审计**：所有登录会话都有完整的审计日志，符合医疗健康行业合规要求
-5. **会话撤销**：支持强制登出所有设备、撤销特定会话等安全功能
-
-### Token刷新机制说明
-
-本系统采用双Token认证机制，包括访问令牌(Access Token)和刷新令牌(Refresh Token)：
-
-1. **访问令牌(Access Token)**：
-   - 短期有效（通常为1-2小时）
-   - 用于访问受保护的API资源
-   - 无状态，减轻服务器负担
-   - 过期后需要使用刷新令牌获取新的访问令牌
-
-2. **刷新令牌(Refresh Token)**：
-   - 长期有效（通常为7-30天）
-   - 仅用于获取新的访问令牌，不能直接访问资源
-   - 存储在服务器数据库中，可以被撤销
-   - 通常是一次性使用，每次刷新都会生成新的刷新令牌
-   - 提高安全性，即使访问令牌泄露，攻击者也只能在短时间内使用
-
-3. **刷新流程**：
-   - 当访问令牌过期时，客户端使用刷新令牌请求新的访问令牌
-   - 服务器验证刷新令牌的有效性，并检查关联会话的状态
-   - 验证通过后，服务器生成新的访问令牌和刷新令牌
-   - 旧的刷新令牌被标记为已使用，防止重放攻击
-   - 客户端使用新的访问令牌继续访问资源，无需用户重新登录
-
-4. **安全优势**：
-   - 减少用户重复登录的频率，提升用户体验
-   - 缩短访问令牌的有效期，降低令牌被盗用的风险
-   - 支持撤销特定用户的所有会话（如密码更改、检测到异常行为时）
-   - 符合OAuth 2.0和OpenID Connect等现代认证标准
-
-### 测试注意事项
-
-#### 登出测试
-- **逻辑删除机制**：登出成功后，session 记录不会被物理删除，而是通过设置 `deleted=1` 和 `status=0` 标记为已删除和失效
-- **重复登出检测**：对已登出的用户再次执行登出操作时，返回"用户已经登出，无需重复操作"而不是"登出成功"
-- **会话状态检查**：登出接口会检查会话状态，区分"有效"、"已登出"、"已过期"、"不存在"等不同情况
-- **安全验证**：使用已登出的 token 访问受保护接口应返回 401 错误
-- **数据库验证**：可以查询 `user_sessions` 表验证 session 记录的 `deleted` 和 `status` 字段是否被正确更新
-- **审计保留**：所有会话记录都会保留在数据库中，便于安全审计和问题排查
-
-#### Session 管理测试
-- **创建验证**：登录成功后检查 `user_sessions` 表是否创建了对应记录
-- **字段验证**：验证 session 记录包含正确的用户 ID、IP 地址、设备信息
-- **状态字段**：新创建的 session 应该有 `deleted=0`（未删除）和 `status=1`（有效）
-- **过期时间**：测试 session 过期时间是否与 JWT 过期时间一致
-- **多设备管理**：测试多设备登录时的 session 管理
-- **逻辑删除验证**：登出后验证 session 记录的 `deleted` 和 `status` 字段更新
-- **查询过滤**：验证只有 `deleted=0 AND status=1` 的会话被认为是有效会话
-- **刷新令牌验证**：验证刷新操作后，`refresh_token` 字段是否更新，旧的刷新令牌是否失效
-
-#### 安全审计测试
-- 验证登录时是否正确记录 IP 地址和 User-Agent
-- 测试异常登录行为的检测和记录
-- 验证会话活动时间的更新机制
-
-## 注意事项
-
-- 确保数据库连接正常
-- 第一次注册前确保用户表为空或使用不同的用户名
-- 保存token用于后续接口测试
-- 注意访问令牌的有效期（默认2小时）和刷新令牌的有效期（默认7天）
-- **数据库字段要求**：确保 `user_sessions` 表包含 `deleted`、`status`、`session_token`和`refresh_token`字段
-- **逻辑删除测试**：登出后检查数据库记录是否正确标记为已删除（`deleted=1, status=0`）
-- **重复操作测试**：测试重复登出、使用已登出token等边界情况
-- **会话状态测试**：验证不同会话状态下的接口响应是否正确
-- **刷新令牌测试**：验证刷新令牌是否为一次性使用，使用过的刷新令牌再次请求应返回错误
-
-## 刷新令牌测试步骤
-
-1. **基本刷新流程测试**
-   - 登录获取初始访问令牌和刷新令牌
-   - 记录数据库中的刷新令牌值
-   - 使用刷新令牌调用刷新接口
-   - 验证返回新的访问令牌和刷新令牌
-   - 检查数据库中刷新令牌是否已更新
-
-2. **令牌有效性测试**
-   - 使用新的访问令牌访问受保护资源，确认可以正常访问
-   - 尝试使用旧的访问令牌访问受保护资源，确认返回401错误
-   - 尝试使用旧的刷新令牌获取新的访问令牌，确认返回错误
-
-3. **边界情况测试**
-   - 使用无效的刷新令牌调用刷新接口
-   - 使用已过期的刷新令牌调用刷新接口
-   - 在用户登出后使用刷新令牌调用刷新接口
-   - 不提供刷新令牌调用刷新接口（使用会话中存储的刷新令牌）
-
-4. **安全测试**
-   - 测试修改密码后刷新令牌是否失效
-   - 测试管理员禁用用户后刷新令牌是否失效
-   - 测试从不同IP地址或设备使用刷新令牌
+**测试完成后，请确保所有接口都能正常响应，并且返回的数据格式符合预期。**

@@ -55,6 +55,18 @@ public class UserSession {
     private String userAgent;
 
     /**
+     * 设备信息
+     */
+    @TableField("device_info")
+    private String deviceInfo;
+
+    /**
+     * 地理位置
+     */
+    @TableField("location")
+    private String location;
+
+    /**
      * 创建时间
      */
     @TableField(value = "created_time", fill = FieldFill.INSERT)
@@ -70,7 +82,7 @@ public class UserSession {
      * 最后活动时间
      */
     @TableField("last_activity_time")
-    private LocalDateTime lastAccessedAt;
+    private LocalDateTime lastActivityTime;
 
     /**
      * 更新时间
@@ -79,17 +91,15 @@ public class UserSession {
     private LocalDateTime updatedTime;
 
     /**
-     * 逻辑删除标识
-     * 0: 未删除, 1: 已删除
+     * 是否删除
      */
-    @TableLogic
     @TableField("deleted")
-    private Integer deleted;
+    @TableLogic
+    private Boolean deleted;
 
     /**
      * 会话状态
-     * 0: 已失效, 1: 有效
      */
     @TableField("status")
-    private Integer status;
+    private Byte status;
 }

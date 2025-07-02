@@ -48,8 +48,50 @@ public interface UserSessionMapper extends BaseMapper<UserSession> {
     int updateSessionToken(@Param("oldToken") String oldToken, @Param("newToken") String newToken, @Param("expiresAt") LocalDateTime expiresAt);
 
     /**
-     * 删除过期会话
+     * 根据用户ID查询会话列表
      */
-    @Delete("DELETE FROM user_sessions WHERE expires_at <= NOW()")
-    int deleteExpiredSessions();
+    @Select("SELECT * FROM user_sessions WHERE user_id = #{userId} AND status = 1 AND deleted = 0 ORDER BY created_time DESC")
+    List<UserSession> findByUserId(@Param("userId") Long userId);
+
+    /**
+     * 根据会话令牌查询会话
+     */
+    @Select("SELECT * FROM user_sessions WHERE session_token = #{sessionToken} AND status = 1 AND deleted = 0")
+    UserSession findBySessionToken(@Param("sessionToken") String sessionToken);
+
+    /**
+     * 根据刷新令牌查询会话
+     */
+    @Select("SELECT * FROM user_sessions WHERE refresh_token = #{refreshToken} AND status = 1 AND deleted = 0")
+    UserSession findByRefreshToken(@Param("refreshToken") String refreshToken);
+
+    /**
+     * 更新会话最后活动时间
+     */
+    @Update("UPDATE user_sessions SET last_activity_time = #{lastActivityTime}, updated_time = NOW() WHERE id = #{sessionId}")
+    int updateLastActivityTime(@Param("sessionId") Long sessionId, @Param("lastActivityTime") LocalDateTime lastActivityTime);
+
+    /**
+     * 使会话失效
+     */
+    @Update("UPDATE user_sessions SET status = 0, updated_time = NOW() WHERE id = #{sessionId}")
+    int expireSession(@Param("sessionId") Long sessionId);
+
+    /**
+     * 使用户的所有会话失效
+     */
+    @Update("UPDATE user_sessions SET status = 0, updated_time = NOW() WHERE user_id = #{userId} AND status = 1")
+    int expireAllUserSessions(@Param("userId") Long userId);
+
+    /**
+     * 逻辑删除过期的会话
+     */
+    @Update("UPDATE user_sessions SET deleted = 1, updated_time = NOW() WHERE expires_at < #{currentTime} OR status = 0")
+    int deleteExpiredSessions(@Param("currentTime") LocalDateTime currentTime);
+
+    /**
+     * 统计用户活跃会话数
+     */
+    @Select("SELECT COUNT(*) FROM user_sessions WHERE user_id = #{userId} AND status = 1 AND expires_at > #{currentTime} AND deleted = 0")
+    Long countActiveSessionsByUserId(@Param("userId") Long userId, @Param("currentTime") LocalDateTime currentTime);
 }

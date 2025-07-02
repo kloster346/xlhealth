@@ -103,7 +103,7 @@ public class MapperTest {
         assertNotNull(sessions);
         
         // 测试删除过期会话
-        int deletedCount = userSessionMapper.deleteExpiredSessions();
+        int deletedCount = userSessionMapper.deleteExpiredSessions(java.time.LocalDateTime.now());
         assertTrue(deletedCount >= 0);
     }
 
@@ -139,11 +139,11 @@ public class MapperTest {
         user.setEmail("test@example.com");
         user.setPasswordHash("hashedpassword");
         user.setNickname("Test User");
-        user.setStatus(1); // 1 表示 ACTIVE 状态
+        user.setStatus(User.UserStatus.ACTIVE); // ACTIVE 状态
         
         assertNotNull(user);
         assertEquals("testuser", user.getUsername());
-        assertEquals(Integer.valueOf(1), user.getStatus());
+        assertEquals(User.UserStatus.ACTIVE, user.getStatus());
         
         // 测试创建对话实体
         Conversation conversation = new Conversation();

@@ -41,9 +41,9 @@ public class UserSessionServiceImpl implements UserSessionService {
         session.setIpAddress(ipAddress);
         session.setUserAgent(userAgent);
         session.setExpiresAt(LocalDateTime.now().plusSeconds(jwtExpiration));
-        session.setLastAccessedAt(LocalDateTime.now());
-        session.setDeleted(0); // 未删除
-        session.setStatus(1);  // 有效状态
+        session.setLastActivityTime(LocalDateTime.now());
+        session.setDeleted(false); // 未删除
+        session.setStatus((byte) 1);  // 有效状态
 
         // 保存会话
         userSessionMapper.insert(session);
@@ -81,14 +81,14 @@ public class UserSessionServiceImpl implements UserSessionService {
         }
         
         // 检查会话是否已经被删除或失效
-        if (session.getDeleted() == 1 || session.getStatus() == 0) {
+        if (Boolean.TRUE.equals(session.getDeleted()) || session.getStatus() == 0) {
             log.warn("用户会话已经失效或已登出: sessionToken={}", sessionToken);
             return false;
         }
         
-        // 逻辑删除：设置deleted=1, status=0
-        session.setDeleted(1);
-        session.setStatus(0);
+        // 逻辑删除：设置deleted=true, status=0
+        session.setDeleted(true);
+        session.setStatus((byte) 0);
         int result = userSessionMapper.updateById(session);
         boolean success = result > 0;
         
@@ -126,7 +126,7 @@ public class UserSessionServiceImpl implements UserSessionService {
     public int cleanupExpiredSessions() {
         log.info("开始清理过期会话");
         
-        int deletedCount = userSessionMapper.deleteExpiredSessions();
+        int deletedCount = userSessionMapper.deleteExpiredSessions(LocalDateTime.now());
         
         log.info("过期会话清理完成: deletedCount={}", deletedCount);
         return deletedCount;
@@ -147,7 +147,7 @@ public class UserSessionServiceImpl implements UserSessionService {
         }
         
         // 检查是否已登出
-        if (session.getDeleted() == 1 || session.getStatus() == 0) {
+        if (Boolean.TRUE.equals(session.getDeleted()) || session.getStatus() == 0) {
             return "LOGGED_OUT";
         }
         

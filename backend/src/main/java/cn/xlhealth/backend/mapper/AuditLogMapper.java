@@ -21,24 +21,30 @@ public interface AuditLogMapper extends BaseMapper<AuditLog> {
     /**
      * 根据用户ID查询审计日志（分页）
      */
-    @Select("SELECT * FROM audit_logs WHERE user_id = #{userId} ORDER BY operation_time DESC")
+    @Select("SELECT * FROM audit_logs WHERE user_id = #{userId} ORDER BY created_time DESC")
     IPage<AuditLog> findByUserId(Page<AuditLog> page, @Param("userId") Long userId);
 
     /**
      * 根据操作类型查询审计日志
      */
-    @Select("SELECT * FROM audit_logs WHERE operation_type = #{operationType} ORDER BY operation_time DESC")
-    List<AuditLog> findByOperationType(@Param("operationType") String operationType);
+    @Select("SELECT * FROM audit_logs WHERE action = #{action} ORDER BY created_time DESC")
+    List<AuditLog> findByAction(@Param("action") String action);
 
     /**
      * 根据时间范围查询审计日志
      */
-    @Select("SELECT * FROM audit_logs WHERE operation_time BETWEEN #{startTime} AND #{endTime} ORDER BY operation_time DESC")
+    @Select("SELECT * FROM audit_logs WHERE created_time BETWEEN #{startTime} AND #{endTime} ORDER BY created_time DESC")
     List<AuditLog> findByTimeRange(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 
     /**
-     * 删除指定时间前的日志
+     * 根据资源类型查询审计日志
      */
-    @Delete("DELETE FROM audit_logs WHERE operation_time < #{beforeTime}")
+    @Select("SELECT * FROM audit_logs WHERE resource_type = #{resourceType} ORDER BY created_time DESC")
+    List<AuditLog> findByResourceType(@Param("resourceType") String resourceType);
+
+    /**
+     * 删除指定时间之前的审计日志
+     */
+    @Delete("DELETE FROM audit_logs WHERE created_time < #{beforeTime}")
     int deleteBeforeTime(@Param("beforeTime") LocalDateTime beforeTime);
 }

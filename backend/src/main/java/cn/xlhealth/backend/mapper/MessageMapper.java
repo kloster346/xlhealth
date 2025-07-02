@@ -17,18 +17,18 @@ public interface MessageMapper extends BaseMapper<Message> {
     /**
      * 根据对话ID查询消息列表（分页）
      */
-    @Select("SELECT * FROM messages WHERE conversation_id = #{conversationId} AND is_deleted = 0 ORDER BY created_at ASC")
+    @Select("SELECT * FROM messages WHERE conversation_id = #{conversationId} AND deleted = 0 ORDER BY created_time ASC")
     IPage<Message> findByConversationId(Page<Message> page, @Param("conversationId") Long conversationId);
 
     /**
      * 根据对话ID统计消息数量
      */
-    @Select("SELECT COUNT(*) FROM messages WHERE conversation_id = #{conversationId} AND is_deleted = 0")
+    @Select("SELECT COUNT(*) FROM messages WHERE conversation_id = #{conversationId} AND deleted = 0")
     Long countByConversationId(@Param("conversationId") Long conversationId);
 
     /**
      * 查询对话中的最后一条消息
      */
-    @Select("SELECT * FROM messages WHERE conversation_id = #{conversationId} AND is_deleted = 0 ORDER BY created_at DESC LIMIT 1")
+    @Select("SELECT * FROM messages WHERE conversation_id = #{conversationId} AND deleted = 0 ORDER BY created_time DESC LIMIT 1")
     Message findLastByConversationId(@Param("conversationId") Long conversationId);
 }
