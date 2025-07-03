@@ -61,7 +61,7 @@ public class FileStorageServiceImpl implements FileStorageService {
 
         } catch (IOException e) {
             logger.error("文件存储失败", e);
-            throw new BusinessException("文件存储失败");
+            throw BusinessException.internalError("文件存储失败");
         }
     }
 
@@ -119,15 +119,15 @@ public class FileStorageServiceImpl implements FileStorageService {
      */
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new BusinessException("文件不能为空");
+            throw BusinessException.badRequest("文件不能为空");
         }
 
         if (!isValidFileType(file)) {
-            throw new BusinessException("不支持的文件类型，仅支持: " + fileUploadProperties.getAllowedTypes());
+            throw BusinessException.badRequest("不支持的文件类型，仅支持: " + fileUploadProperties.getAllowedTypes());
         }
 
         if (!isValidFileSize(file)) {
-            throw new BusinessException("文件大小超过限制: " + (fileUploadProperties.getMaxSize() / 1024 / 1024) + "MB");
+            throw BusinessException.badRequest("文件大小超过限制: " + (fileUploadProperties.getMaxSize() / 1024 / 1024) + "MB");
         }
     }
 

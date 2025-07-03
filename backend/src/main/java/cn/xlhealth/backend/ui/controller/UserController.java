@@ -3,6 +3,7 @@ package cn.xlhealth.backend.ui.controller;
 import cn.xlhealth.backend.service.UserService;
 import cn.xlhealth.backend.service.FileStorageService;
 import cn.xlhealth.backend.ui.dto.*;
+import cn.xlhealth.backend.ui.advice.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -106,12 +107,12 @@ public class UserController {
     private Long getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new RuntimeException("用户未登录");
+            throw BusinessException.unauthorized("用户未登录");
         }
 
         String userIdStr = authentication.getName();
         if ("anonymousUser".equals(userIdStr)) {
-            throw new RuntimeException("用户未登录");
+            throw BusinessException.unauthorized("用户未登录");
         }
 
         try {
@@ -119,7 +120,7 @@ public class UserController {
             return Long.parseLong(userIdStr);
         } catch (NumberFormatException e) {
             log.error("无效的用户ID格式: {}", userIdStr, e);
-            throw new RuntimeException("用户认证信息异常");
+            throw BusinessException.unauthorized("用户认证信息异常");
         }
     }
 }

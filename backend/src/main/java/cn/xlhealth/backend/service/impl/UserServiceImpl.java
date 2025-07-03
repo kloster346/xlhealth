@@ -50,17 +50,17 @@ public class UserServiceImpl implements UserService {
 
         // 验证密码确认
         if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
-            throw new BusinessException("密码和确认密码不匹配");
+            throw BusinessException.badRequest("密码和确认密码不匹配");
         }
 
         // 检查用户名是否已存在
         if (userMapper.findByUsername(registerRequest.getUsername()) != null) {
-            throw new BusinessException("用户名已存在");
+            throw BusinessException.conflict("用户名已存在");
         }
 
         // 检查邮箱是否已存在
         if (userMapper.findByEmail(registerRequest.getEmail()) != null) {
-            throw new BusinessException("邮箱已被注册");
+            throw BusinessException.conflict("邮箱已被注册");
         }
 
         // 创建用户
@@ -89,17 +89,17 @@ public class UserServiceImpl implements UserService {
         // 查找用户
         User user = userMapper.findByUsernameOrEmail(loginRequest.getUsernameOrEmail());
         if (user == null) {
-            throw new BusinessException("用户名或密码错误");
+            throw BusinessException.unauthorized("用户名或密码错误");
         }
 
         // 检查用户状态
         if (user.getStatus() != null && user.getStatus() == User.UserStatus.SUSPENDED) {
-            throw new BusinessException("账户已被禁用");
+            throw BusinessException.forbidden("账户已被禁用");
         }
 
         // 验证密码
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPasswordHash())) {
-            throw new BusinessException("用户名或密码错误");
+            throw BusinessException.unauthorized("用户名或密码错误");
         }
 
         // 更新最后登录时间
@@ -230,7 +230,7 @@ public class UserServiceImpl implements UserService {
 
         User user = userMapper.selectById(userId);
         if (user == null) {
-            throw new BusinessException("用户不存在");
+            throw BusinessException.notFound("用户不存在");
         }
 
         return convertToUserProfileDTO(user);
@@ -243,14 +243,14 @@ public class UserServiceImpl implements UserService {
 
         User user = userMapper.selectById(userId);
         if (user == null) {
-            throw new BusinessException("用户不存在");
+            throw BusinessException.notFound("用户不存在");
         }
 
         // 检查邮箱是否被其他用户使用
         if (StringUtils.hasText(request.getEmail()) && !request.getEmail().equals(user.getEmail())) {
             User existingUser = userMapper.findByEmail(request.getEmail());
             if (existingUser != null && !existingUser.getId().equals(userId)) {
-                throw new BusinessException("邮箱已被其他用户使用");
+                throw BusinessException.conflict("邮箱已被其他用户使用");
             }
         }
 
@@ -258,7 +258,7 @@ public class UserServiceImpl implements UserService {
         int result = userMapper.updateUserProfile(userId, request.getEmail(), request.getNickname(),
                 request.getAvatarUrl());
         if (result == 0) {
-            throw new BusinessException("更新用户资料失败");
+            throw BusinessException.internalError("更新用户资料失败");
         }
 
         log.info("用户资料更新成功: userId={}", userId);
@@ -274,22 +274,22 @@ public class UserServiceImpl implements UserService {
 
         // 验证新密码和确认密码是否一致
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            throw new BusinessException("新密码和确认密码不一致");
+            throw BusinessException.badRequest("新密码和确认密码不一致");
         }
 
         User user = userMapper.selectById(userId);
         if (user == null) {
-            throw new BusinessException("用户不存在");
+            throw BusinessException.notFound("用户不存在");
         }
 
         // 验证当前密码
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
-            throw new BusinessException("当前密码错误");
+            throw BusinessException.badRequest("当前密码错误");
         }
 
         // 检查新密码是否与当前密码相同
         if (passwordEncoder.matches(request.getNewPassword(), user.getPasswordHash())) {
-            throw new BusinessException("新密码不能与当前密码相同");
+            throw BusinessException.badRequest("新密码不能与当前密码相同");
         }
 
         // 更新密码
@@ -300,7 +300,7 @@ public class UserServiceImpl implements UserService {
             log.info("密码修改成功: userId={}", userId);
             return true;
         } else {
-            throw new BusinessException("密码修改失败");
+            throw BusinessException.internalError("密码修改失败");
         }
     }
 
@@ -316,7 +316,7 @@ public class UserServiceImpl implements UserService {
 
         User user = userMapper.selectById(userId);
         if (user == null) {
-            throw new BusinessException("用户不存在");
+            throw BusinessException.notFound("用户不存在");
         }
 
         int result = userMapper.updateUserAvatar(userId, avatarUrl);
@@ -325,7 +325,7 @@ public class UserServiceImpl implements UserService {
             log.info("用户头像更新成功: userId={}", userId);
             return true;
         } else {
-            throw new BusinessException("头像更新失败");
+            throw BusinessException.internalError("头像更新失败");
         }
     }
 

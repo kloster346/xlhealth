@@ -1,5 +1,6 @@
 package cn.xlhealth.backend.ui.dto;
 
+import cn.xlhealth.backend.common.ErrorCode;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.LocalDateTime;
@@ -19,7 +20,7 @@ public class ApiResponse<T> {
     /**
      * 响应码
      */
-    private String code;
+    private Integer code;
 
     /**
      * 响应消息
@@ -40,7 +41,7 @@ public class ApiResponse<T> {
         this.timestamp = LocalDateTime.now();
     }
 
-    public ApiResponse(boolean success, String code, String message, T data) {
+    public ApiResponse(boolean success, Integer code, String message, T data) {
         this.success = success;
         this.code = code;
         this.message = message;
@@ -50,53 +51,60 @@ public class ApiResponse<T> {
 
     // 成功响应的静态工厂方法
     public static <T> ApiResponse<T> success() {
-        return new ApiResponse<>(true, "SUCCESS", "操作成功", null);
+        return new ApiResponse<>(true, ErrorCode.SUCCESS, "操作成功", null);
     }
 
     public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(true, "SUCCESS", "操作成功", data);
+        return new ApiResponse<>(true, ErrorCode.SUCCESS, "操作成功", data);
     }
 
     public static <T> ApiResponse<T> success(String message, T data) {
-        return new ApiResponse<>(true, "SUCCESS", message, data);
+        return new ApiResponse<>(true, ErrorCode.SUCCESS, message, data);
     }
 
-    public static <T> ApiResponse<T> success(String code, String message, T data) {
+    public static <T> ApiResponse<T> success(Integer code, String message, T data) {
         return new ApiResponse<>(true, code, message, data);
     }
 
     // 失败响应的静态工厂方法
     public static <T> ApiResponse<T> error(String message) {
-        return new ApiResponse<>(false, "ERROR", message, null);
+        return new ApiResponse<>(false, ErrorCode.ERROR, message, null);
     }
 
-    public static <T> ApiResponse<T> error(String code, String message) {
+    public static <T> ApiResponse<T> error(Integer code, String message) {
         return new ApiResponse<>(false, code, message, null);
     }
 
-    public static <T> ApiResponse<T> error(String code, String message, T data) {
+    public static <T> ApiResponse<T> error(Integer code, String message, T data) {
         return new ApiResponse<>(false, code, message, data);
     }
 
     // 常用的错误响应
     public static <T> ApiResponse<T> badRequest(String message) {
-        return new ApiResponse<>(false, "BAD_REQUEST", message, null);
+        return new ApiResponse<>(false, ErrorCode.BAD_REQUEST, message, null);
     }
 
     public static <T> ApiResponse<T> unauthorized(String message) {
-        return new ApiResponse<>(false, "UNAUTHORIZED", message, null);
+        return new ApiResponse<>(false, ErrorCode.UNAUTHORIZED, message, null);
     }
 
     public static <T> ApiResponse<T> forbidden(String message) {
-        return new ApiResponse<>(false, "FORBIDDEN", message, null);
+        return new ApiResponse<>(false, ErrorCode.FORBIDDEN, message, null);
     }
 
     public static <T> ApiResponse<T> notFound(String message) {
-        return new ApiResponse<>(false, "NOT_FOUND", message, null);
+        return new ApiResponse<>(false, ErrorCode.NOT_FOUND, message, null);
     }
 
     public static <T> ApiResponse<T> internalError(String message) {
-        return new ApiResponse<>(false, "INTERNAL_ERROR", message, null);
+        return new ApiResponse<>(false, ErrorCode.INTERNAL_ERROR, message, null);
+    }
+
+    /**
+     * JWT相关错误
+     */
+    public static <T> ApiResponse<T> jwtError(String message) {
+        return new ApiResponse<>(false, ErrorCode.UNAUTHORIZED, message != null ? message : "JWT token无效或已过期", null);
     }
 
     // Getter和Setter方法
@@ -108,11 +116,11 @@ public class ApiResponse<T> {
         this.success = success;
     }
 
-    public String getCode() {
+    public Integer getCode() {
         return code;
     }
 
-    public void setCode(String code) {
+    public void setCode(Integer code) {
         this.code = code;
     }
 

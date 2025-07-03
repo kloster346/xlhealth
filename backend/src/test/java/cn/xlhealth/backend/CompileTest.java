@@ -34,11 +34,11 @@ public class CompileTest {
         user.setCreatedTime(LocalDateTime.now());
         user.setUpdatedTime(LocalDateTime.now());
         user.setLastLoginTime(LocalDateTime.now());
-        
+
         assertNotNull(user);
         assertEquals("testuser", user.getUsername());
         assertEquals(User.UserStatus.ACTIVE, user.getStatus());
-        
+
         // 测试Conversation实体类
         Conversation conversation = new Conversation();
         conversation.setId(1L);
@@ -49,11 +49,11 @@ public class CompileTest {
         conversation.setCreatedTime(LocalDateTime.now());
         conversation.setUpdatedTime(LocalDateTime.now());
         conversation.setLastMessageTime(LocalDateTime.now());
-        
+
         assertNotNull(conversation);
         assertEquals("Test Conversation", conversation.getTitle());
         assertEquals(Conversation.ConversationStatus.ACTIVE, conversation.getStatus());
-        
+
         // 测试Message实体类
         Message message = new Message();
         message.setId(1L);
@@ -66,11 +66,11 @@ public class CompileTest {
         // message.setMetadata("{\"key\": \"value\"}"); // Message实体没有metadata字段
         message.setCreatedTime(LocalDateTime.now());
         message.setDeleted(false);
-        
+
         assertNotNull(message);
         assertEquals("Test message content", message.getContent());
         assertEquals(Message.MessageRole.USER, message.getRole());
-        
+
         // 测试SystemConfig实体类
         SystemConfig config = new SystemConfig();
         config.setConfigKey("test.key");
@@ -79,14 +79,14 @@ public class CompileTest {
         config.setDescription("Test configuration");
         config.setCreatedTime(LocalDateTime.now());
         config.setUpdatedTime(LocalDateTime.now());
-        
+
         assertEquals("test.key", config.getConfigKey());
         assertEquals("test.value", config.getConfigValue());
         assertEquals(SystemConfig.ConfigType.NUMBER, config.getConfigType());
         assertEquals("Test configuration", config.getDescription());
         assertNotNull(config.getCreatedTime());
         assertNotNull(config.getUpdatedTime());
-        
+
         // 测试AuditLog实体类
         AuditLog auditLog = new AuditLog();
         auditLog.setId(1L);
@@ -98,7 +98,7 @@ public class CompileTest {
         auditLog.setNewValues("{\"name\":\"test\"}");
         auditLog.setIpAddress("192.168.1.1");
         auditLog.setCreatedTime(LocalDateTime.now());
-        
+
         assertNotNull(auditLog.getId());
         assertEquals(Long.valueOf(1L), auditLog.getUserId());
         assertEquals("CREATE", auditLog.getAction());
@@ -108,7 +108,7 @@ public class CompileTest {
         assertEquals("{\"name\":\"test\"}", auditLog.getNewValues());
         assertEquals("192.168.1.1", auditLog.getIpAddress());
         assertNotNull(auditLog.getCreatedTime());
-        
+
         // 测试UserSession实体类
         UserSession session = new UserSession();
         session.setSessionToken("session123");
@@ -118,7 +118,7 @@ public class CompileTest {
         session.setCreatedTime(LocalDateTime.now());
         session.setExpiresAt(LocalDateTime.now().plusHours(24));
         session.setLastActivityTime(LocalDateTime.now());
-        
+
         assertEquals("session123", session.getSessionToken());
         assertEquals(Long.valueOf(1L), session.getUserId());
         assertEquals("192.168.1.1", session.getIpAddress());
@@ -127,26 +127,26 @@ public class CompileTest {
         assertNotNull(session.getExpiresAt());
         assertNotNull(session.getLastActivityTime());
     }
-    
+
     @Test
     public void testMapperInterfacesCompilation() {
         // 验证Mapper接口可以正确编译
         // 这里只是验证类型定义，不执行实际的数据库操作
-        
+
         Class<?> userMapperClass = UserMapper.class;
         Class<?> conversationMapperClass = ConversationMapper.class;
         Class<?> messageMapperClass = MessageMapper.class;
         Class<?> systemConfigMapperClass = SystemConfigMapper.class;
         Class<?> auditLogMapperClass = AuditLogMapper.class;
         Class<?> userSessionMapperClass = UserSessionMapper.class;
-        
+
         assertNotNull(userMapperClass);
         assertNotNull(conversationMapperClass);
         assertNotNull(messageMapperClass);
         assertNotNull(systemConfigMapperClass);
         assertNotNull(auditLogMapperClass);
         assertNotNull(userSessionMapperClass);
-        
+
         // 验证Mapper接口继承了BaseMapper
         assertTrue(com.baomidou.mybatisplus.core.mapper.BaseMapper.class.isAssignableFrom(userMapperClass));
         assertTrue(com.baomidou.mybatisplus.core.mapper.BaseMapper.class.isAssignableFrom(conversationMapperClass));
@@ -155,7 +155,7 @@ public class CompileTest {
         assertTrue(com.baomidou.mybatisplus.core.mapper.BaseMapper.class.isAssignableFrom(auditLogMapperClass));
         assertTrue(com.baomidou.mybatisplus.core.mapper.BaseMapper.class.isAssignableFrom(userSessionMapperClass));
     }
-    
+
     @Test
     public void testEntityConverterCompilation() {
         // 测试实体转换工具类
@@ -167,37 +167,38 @@ public class CompileTest {
         user.setNickname("Test User");
         user.setStatus(User.UserStatus.ACTIVE);
         user.setCreatedTime(LocalDateTime.now());
-        
+
         // 测试用户实体转换
         EntityConverter.UserResponseDto userDto = EntityConverter.toUserResponseDto(user);
         assertNotNull(userDto);
         assertEquals("testuser", userDto.getUsername());
         assertEquals("test@example.com", userDto.getEmail());
         assertNull(userDto.getPasswordHash()); // 密码应该被清除
-        
+
         // 测试用户请求DTO转换
         EntityConverter.UserRequestDto requestDto = new EntityConverter.UserRequestDto();
         requestDto.setUsername("newuser");
         requestDto.setEmail("new@example.com");
         requestDto.setPassword("password");
-        
+
         User convertedUser = EntityConverter.toUserEntity(requestDto);
         assertNotNull(convertedUser);
         assertEquals("newuser", convertedUser.getUsername());
         assertEquals("new@example.com", convertedUser.getEmail());
-        
+
         // 测试对话实体转换
         Conversation conversation = new Conversation();
         conversation.setId(1L);
         conversation.setUserId(1L);
         conversation.setTitle("Test Conversation");
         conversation.setStatus(Conversation.ConversationStatus.ACTIVE);
-        
-        EntityConverter.ConversationResponseDto conversationDto = EntityConverter.toConversationResponseDto(conversation);
+
+        EntityConverter.ConversationResponseDto conversationDto = EntityConverter
+                .toConversationResponseDto(conversation);
         assertNotNull(conversationDto);
         assertEquals("Test Conversation", conversationDto.getTitle());
         assertEquals(Conversation.ConversationStatus.ACTIVE, conversationDto.getStatus());
-        
+
         // 测试消息实体转换
         Message message = new Message();
         message.setId(1L);
@@ -207,12 +208,12 @@ public class CompileTest {
         message.setContent("Test message");
         message.setContentType(Message.ContentType.TEXT);
         message.setStatus(Message.MessageStatus.SUCCESS);
-        
+
         EntityConverter.MessageResponseDto messageDto = EntityConverter.toMessageResponseDto(message);
         assertNotNull(messageDto);
         assertEquals("Test message", messageDto.getContent());
         assertEquals(Message.MessageRole.USER, messageDto.getRole());
-        
+
         // 测试批量转换
         List<User> users = Arrays.asList(user);
         List<EntityConverter.UserResponseDto> userDtos = EntityConverter.toUserResponseDtoList(users);
@@ -220,29 +221,29 @@ public class CompileTest {
         assertEquals(1, userDtos.size());
         assertEquals("testuser", userDtos.get(0).getUsername());
     }
-    
+
     @Test
     public void testApiResponseCompilation() {
         // 测试ApiResponse类
         ApiResponse<String> successResponse = ApiResponse.success("Hello World");
         assertNotNull(successResponse);
         assertTrue(successResponse.isSuccess());
-        assertEquals("SUCCESS", successResponse.getCode());
+        assertEquals(Integer.valueOf(0), successResponse.getCode());
         assertEquals("Hello World", successResponse.getData());
-        
-        ApiResponse<Void> errorResponse = ApiResponse.error("BAD_REQUEST", "Bad request");
+
+        ApiResponse<Void> errorResponse = ApiResponse.error(10001, "Bad request");
         assertNotNull(errorResponse);
         assertFalse(errorResponse.isSuccess());
-        assertEquals("BAD_REQUEST", errorResponse.getCode());
+        assertEquals(Integer.valueOf(10001), errorResponse.getCode());
         assertEquals("Bad request", errorResponse.getMessage());
-        
+
         ApiResponse<Void> badRequestResponse = ApiResponse.badRequest("Operation failed");
         assertNotNull(badRequestResponse);
         assertFalse(badRequestResponse.isSuccess());
-        assertEquals("BAD_REQUEST", badRequestResponse.getCode());
+        assertEquals(Integer.valueOf(10001), badRequestResponse.getCode());
         assertEquals("Operation failed", badRequestResponse.getMessage());
     }
-    
+
     @Test
     public void testEnumCompilation() {
         // 测试枚举类型
@@ -251,31 +252,31 @@ public class CompileTest {
         assertNotNull(User.UserStatus.ACTIVE);
         assertNotNull(User.UserStatus.INACTIVE);
         assertNotNull(User.UserStatus.SUSPENDED);
-        
+
         Conversation.ConversationStatus[] conversationStatuses = Conversation.ConversationStatus.values();
         assertTrue(conversationStatuses.length > 0);
         assertNotNull(Conversation.ConversationStatus.ACTIVE);
         assertNotNull(Conversation.ConversationStatus.ARCHIVED);
         assertNotNull(Conversation.ConversationStatus.DELETED);
-        
+
         Message.MessageRole[] messageRoles = Message.MessageRole.values();
         assertTrue(messageRoles.length > 0);
         assertNotNull(Message.MessageRole.USER);
         assertNotNull(Message.MessageRole.ASSISTANT);
         assertNotNull(Message.MessageRole.SYSTEM);
-        
+
         Message.ContentType[] contentTypes = Message.ContentType.values();
         assertTrue(contentTypes.length > 0);
         assertNotNull(Message.ContentType.TEXT);
         assertNotNull(Message.ContentType.IMAGE);
         assertNotNull(Message.ContentType.FILE);
-        
+
         Message.MessageStatus[] messageStatuses = Message.MessageStatus.values();
         assertTrue(messageStatuses.length > 0);
         assertNotNull(Message.MessageStatus.SUCCESS);
         assertNotNull(Message.MessageStatus.FAILED);
         assertNotNull(Message.MessageStatus.PROCESSING);
-        
+
         SystemConfig.ConfigType[] configTypes = SystemConfig.ConfigType.values();
         assertTrue(configTypes.length > 0);
         assertNotNull(SystemConfig.ConfigType.STRING);

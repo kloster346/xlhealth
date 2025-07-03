@@ -1,7 +1,7 @@
 package cn.xlhealth.backend.service;
 
 import cn.xlhealth.backend.config.properties.FileUploadProperties;
-import cn.xlhealth.backend.exception.BusinessException;
+import cn.xlhealth.backend.ui.advice.BusinessException;
 import cn.xlhealth.backend.service.impl.FileStorageServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 /**
  * 文件存储服务测试类
@@ -43,11 +44,11 @@ class FileStorageServiceTest {
     @BeforeEach
     void setUp() {
         // 配置文件上传属性
-        when(fileUploadProperties.getPath()).thenReturn(tempDir.toString());
-        when(fileUploadProperties.getUrlPrefix()).thenReturn("/uploads");
-        when(fileUploadProperties.getAvatarDir()).thenReturn("avatars");
-        when(fileUploadProperties.getAllowedTypes()).thenReturn("jpg,jpeg,png,gif");
-        when(fileUploadProperties.getMaxSize()).thenReturn(5 * 1024 * 1024L); // 5MB
+        lenient().when(fileUploadProperties.getPath()).thenReturn(tempDir.toString());
+        lenient().when(fileUploadProperties.getUrlPrefix()).thenReturn("/uploads");
+        lenient().when(fileUploadProperties.getAvatarDir()).thenReturn("avatars");
+        lenient().when(fileUploadProperties.getAllowedTypes()).thenReturn("jpg,jpeg,png,gif");
+        lenient().when(fileUploadProperties.getMaxSize()).thenReturn(5 * 1024 * 1024L); // 5MB
     }
 
     @Test
@@ -83,8 +84,8 @@ class FileStorageServiceTest {
         byte[] content = "test file content".getBytes();
         MockMultipartFile file = new MockMultipartFile(
                 "file",
-                "test.txt",
-                "text/plain",
+                "test.jpg",
+                "image/jpeg",
                 content);
 
         // 执行测试
@@ -93,7 +94,7 @@ class FileStorageServiceTest {
         // 验证结果
         assertNotNull(result);
         assertTrue(result.startsWith("/uploads/" + directory));
-        assertTrue(result.endsWith(".txt"));
+        assertTrue(result.endsWith(".jpg"));
     }
 
     @Test
@@ -155,8 +156,8 @@ class FileStorageServiceTest {
         byte[] content = "test file content".getBytes();
         MockMultipartFile file = new MockMultipartFile(
                 "file",
-                "test.txt",
-                "text/plain",
+                "test.jpg",
+                "image/jpeg",
                 content);
 
         String fileUrl = fileStorageService.storeFile(file, directory);
@@ -185,19 +186,32 @@ class FileStorageServiceTest {
 
     @Test
     void testIsValidFileType_ValidTypes() {
-        assertTrue(fileStorageService.isValidFileType("test.jpg"));
-        assertTrue(fileStorageService.isValidFileType("test.jpeg"));
-        assertTrue(fileStorageService.isValidFileType("test.png"));
-        assertTrue(fileStorageService.isValidFileType("test.gif"));
-        assertTrue(fileStorageService.isValidFileType("TEST.JPG")); // 大小写不敏感
+        MockMultipartFile jpgFile = new MockMultipartFile("file", "test.jpg", "image/jpeg", "content".getBytes());
+        MockMultipartFile jpegFile = new MockMultipartFile("file", "test.jpeg", "image/jpeg", "content".getBytes());
+        MockMultipartFile pngFile = new MockMultipartFile("file", "test.png", "image/png", "content".getBytes());
+        MockMultipartFile gifFile = new MockMultipartFile("file", "test.gif", "image/gif", "content".getBytes());
+        MockMultipartFile upperCaseFile = new MockMultipartFile("file", "TEST.JPG", "image/jpeg", "content".getBytes());
+
+        assertTrue(fileStorageService.isValidFileType(jpgFile));
+        assertTrue(fileStorageService.isValidFileType(jpegFile));
+        assertTrue(fileStorageService.isValidFileType(pngFile));
+        assertTrue(fileStorageService.isValidFileType(gifFile));
+        assertTrue(fileStorageService.isValidFileType(upperCaseFile)); // 大小写不敏感
     }
 
     @Test
     void testIsValidFileType_InvalidTypes() {
-        assertFalse(fileStorageService.isValidFileType("test.exe"));
-        assertFalse(fileStorageService.isValidFileType("test.pdf"));
-        assertFalse(fileStorageService.isValidFileType("test.doc"));
-        assertFalse(fileStorageService.isValidFileType("test"));
+        MockMultipartFile exeFile = new MockMultipartFile("file", "test.exe", "application/octet-stream",
+                "content".getBytes());
+        MockMultipartFile pdfFile = new MockMultipartFile("file", "test.pdf", "application/pdf", "content".getBytes());
+        MockMultipartFile docFile = new MockMultipartFile("file", "test.doc", "application/msword",
+                "content".getBytes());
+        MockMultipartFile noExtFile = new MockMultipartFile("file", "test", "text/plain", "content".getBytes());
+
+        assertFalse(fileStorageService.isValidFileType(exeFile));
+        assertFalse(fileStorageService.isValidFileType(pdfFile));
+        assertFalse(fileStorageService.isValidFileType(docFile));
+        assertFalse(fileStorageService.isValidFileType(noExtFile));
     }
 
     @Test

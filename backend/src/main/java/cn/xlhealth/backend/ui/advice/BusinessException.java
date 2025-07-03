@@ -1,5 +1,6 @@
 package cn.xlhealth.backend.ui.advice;
 
+import cn.xlhealth.backend.common.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -8,40 +9,40 @@ import org.springframework.http.HttpStatus;
  */
 public class BusinessException extends RuntimeException {
 
-    private String code;
+    private Integer code;
     private HttpStatus httpStatus;
 
     public BusinessException(String message) {
         super(message);
-        this.code = "BUSINESS_ERROR";
+        this.code = ErrorCode.BAD_REQUEST;
         this.httpStatus = HttpStatus.BAD_REQUEST;
     }
 
-    public BusinessException(String code, String message) {
+    public BusinessException(Integer code, String message) {
         super(message);
         this.code = code;
         this.httpStatus = HttpStatus.BAD_REQUEST;
     }
 
-    public BusinessException(String code, String message, HttpStatus httpStatus) {
+    public BusinessException(Integer code, String message, HttpStatus httpStatus) {
         super(message);
         this.code = code;
         this.httpStatus = httpStatus;
     }
 
-    public BusinessException(String code, String message, Throwable cause) {
+    public BusinessException(Integer code, String message, Throwable cause) {
         super(message, cause);
         this.code = code;
         this.httpStatus = HttpStatus.BAD_REQUEST;
     }
 
-    public BusinessException(String code, String message, HttpStatus httpStatus, Throwable cause) {
+    public BusinessException(Integer code, String message, HttpStatus httpStatus, Throwable cause) {
         super(message, cause);
         this.code = code;
         this.httpStatus = httpStatus;
     }
 
-    public String getCode() {
+    public Integer getCode() {
         return code;
     }
 
@@ -51,26 +52,26 @@ public class BusinessException extends RuntimeException {
 
     // 常用的静态工厂方法
     public static BusinessException badRequest(String message) {
-        return new BusinessException("BAD_REQUEST", message, HttpStatus.BAD_REQUEST);
+        return new BusinessException(ErrorCode.BAD_REQUEST, message, HttpStatus.BAD_REQUEST);
     }
 
     public static BusinessException notFound(String message) {
-        return new BusinessException("NOT_FOUND", message, HttpStatus.NOT_FOUND);
+        return new BusinessException(ErrorCode.NOT_FOUND, message, HttpStatus.NOT_FOUND);
     }
 
     public static BusinessException unauthorized(String message) {
-        return new BusinessException("UNAUTHORIZED", message, HttpStatus.UNAUTHORIZED);
+        return new BusinessException(ErrorCode.UNAUTHORIZED, message, HttpStatus.UNAUTHORIZED);
     }
 
     public static BusinessException forbidden(String message) {
-        return new BusinessException("FORBIDDEN", message, HttpStatus.FORBIDDEN);
+        return new BusinessException(ErrorCode.FORBIDDEN, message, HttpStatus.FORBIDDEN);
     }
 
     public static BusinessException conflict(String message) {
-        return new BusinessException("CONFLICT", message, HttpStatus.CONFLICT);
+        return new BusinessException(ErrorCode.CONFLICT, message, HttpStatus.CONFLICT);
     }
 
     public static BusinessException internalError(String message) {
-        return new BusinessException("INTERNAL_ERROR", message, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new BusinessException(ErrorCode.INTERNAL_ERROR, message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

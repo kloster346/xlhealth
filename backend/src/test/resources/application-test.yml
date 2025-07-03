@@ -5,14 +5,18 @@ spring:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
     username: sa
-    password: 
-    
+    password:
+
+  # Flyway配置 - 测试环境禁用
+  flyway:
+    enabled: false
+
   # H2数据库控制台
   h2:
     console:
       enabled: true
       path: /h2-console
-      
+
   # JPA配置
   jpa:
     hibernate:
@@ -22,7 +26,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
-        
+
   # MyBatis Plus配置
 mybatis-plus:
   configuration:
@@ -32,12 +36,12 @@ mybatis-plus:
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
-      
+
 # JWT配置
 jwt:
   secret: testSecretKey123456789012345678901234567890
-  expiration: 3600000  # 1小时
-  
+  expiration: 3600000 # 1小时
+
 # 日志配置
 logging:
   level:
@@ -47,7 +51,7 @@ logging:
     org.mybatis: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-    
+
 # 测试配置
 test:
   cleanup:

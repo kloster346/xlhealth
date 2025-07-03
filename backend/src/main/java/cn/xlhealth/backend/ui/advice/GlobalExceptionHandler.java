@@ -1,6 +1,6 @@
 package cn.xlhealth.backend.ui.advice;
 
-import cn.xlhealth.backend.common.ApiResponse;
+import cn.xlhealth.backend.ui.dto.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -21,6 +21,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,7 +50,7 @@ public class GlobalExceptionHandler {
                 log.warn("参数验证失败: {} - {}", request.getRequestURI(), errors);
 
                 return ResponseEntity.badRequest().body(
-                                ApiResponse.error(400, "参数验证失败", request.getRequestURI()));
+                                ApiResponse.badRequest("参数验证失败"));
         }
 
         /**
@@ -69,7 +70,7 @@ public class GlobalExceptionHandler {
                 log.warn("数据绑定失败: {} - {}", request.getRequestURI(), errors);
 
                 return ResponseEntity.badRequest().body(
-                                ApiResponse.error(400, "数据绑定失败", request.getRequestURI()));
+                                ApiResponse.badRequest("参数绑定失败"));
         }
 
         /**
@@ -86,7 +87,7 @@ public class GlobalExceptionHandler {
                 log.warn("参数类型不匹配: {} - {}", request.getRequestURI(), message);
 
                 return ResponseEntity.badRequest().body(
-                                ApiResponse.error(400, message, request.getRequestURI()));
+                                ApiResponse.badRequest(message));
         }
 
         /**
@@ -112,7 +113,7 @@ public class GlobalExceptionHandler {
                 log.warn("访问被拒绝: {} - {}", request.getRequestURI(), ex.getMessage());
 
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                                ApiResponse.forbidden("访问被拒绝，权限不足"));
+                                ApiResponse.forbidden("访问被拒绝"));
         }
 
         /**
@@ -130,7 +131,7 @@ public class GlobalExceptionHandler {
                 log.warn("约束违反: {} - {}", request.getRequestURI(), errors);
 
                 return ResponseEntity.badRequest().body(
-                                ApiResponse.error(400, "数据验证失败", request.getRequestURI()));
+                                ApiResponse.badRequest("约束违反: " + ex.getMessage()));
         }
 
         /**
@@ -152,7 +153,7 @@ public class GlobalExceptionHandler {
                 log.warn("数据完整性违反: {} - {}", request.getRequestURI(), ex.getMessage());
 
                 return ResponseEntity.badRequest().body(
-                                ApiResponse.error(400, message, request.getRequestURI()));
+                                ApiResponse.badRequest(message));
         }
 
         /**
@@ -205,6 +206,32 @@ public class GlobalExceptionHandler {
 
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                                 ApiResponse.jwtError("不支持的JWT token格式"));
+        }
+
+        /**
+         * 处理业务异常
+         */
+        @ExceptionHandler(BusinessException.class)
+        public ResponseEntity<ApiResponse<Object>> handleBusinessException(
+                        BusinessException ex, HttpServletRequest request) {
+
+                log.warn("业务异常: {} - {}", request.getRequestURI(), ex.getMessage());
+
+                return ResponseEntity.status(ex.getHttpStatus()).body(
+                                ApiResponse.error(ex.getCode(), ex.getMessage()));
+        }
+
+        /**
+         * 处理文件上传大小超限异常
+         */
+        @ExceptionHandler(MaxUploadSizeExceededException.class)
+        public ResponseEntity<ApiResponse<Object>> handleMaxUploadSizeExceededException(
+                        MaxUploadSizeExceededException ex, HttpServletRequest request) {
+
+                log.warn("文件上传大小超限: {} - {}", request.getRequestURI(), ex.getMessage());
+
+                return ResponseEntity.badRequest().body(
+                                ApiResponse.badRequest("文件大小超过限制: " + ex.getMessage()));
         }
 
         /**

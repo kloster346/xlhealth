@@ -107,8 +107,8 @@ public class UserSession {
      * 会话状态枚举
      */
     public enum SessionStatus {
-        INVALID,    // 已失效
-        ACTIVE,     // 活跃
-        EXPIRED     // 已过期
+        INVALID, // 已失效
+        ACTIVE, // 活跃
+        EXPIRED // 已过期
     }
 }

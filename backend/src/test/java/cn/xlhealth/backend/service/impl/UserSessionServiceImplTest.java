@@ -50,7 +50,7 @@ class UserSessionServiceImplTest {
     void setUp() {
         // 设置JWT过期时间
         ReflectionTestUtils.setField(userSessionService, "jwtExpiration", 3600L);
-        
+
         testSession = new UserSession();
         testSession.setId(1L);
         testSession.setUserId(TEST_USER_ID);
@@ -60,7 +60,7 @@ class UserSessionServiceImplTest {
         testSession.setUserAgent(TEST_USER_AGENT);
         testSession.setLastActivityTime(LocalDateTime.now());
         testSession.setExpiresAt(LocalDateTime.now().plusHours(1));
-        testSession.setStatus(UserSession.SessionStatus.ACTIVE);
+        testSession.setStatus(UserSession.SessionStatus.ACTIVE.getValue());
         testSession.setDeleted(false);
     }
 
@@ -75,7 +75,7 @@ class UserSessionServiceImplTest {
         assertEquals(TEST_ACCESS_TOKEN, result.getSessionToken());
         assertEquals(TEST_IP_ADDRESS, result.getIpAddress());
         assertEquals(TEST_USER_AGENT, result.getUserAgent());
-        assertEquals(UserSession.SessionStatus.ACTIVE, result.getStatus());
+        assertEquals(UserSession.SessionStatus.ACTIVE.getValue(), result.getStatus());
         assertNotNull(result.getLastActivityTime());
         assertNotNull(result.getExpiresAt());
         assertFalse(result.getDeleted());
@@ -113,7 +113,7 @@ class UserSessionServiceImplTest {
 
     @Test
     void testUpdateLastAccessedTime() {
-        doNothing().when(userSessionMapper).updateLastAccessedTime(TEST_ACCESS_TOKEN);
+        when(userSessionMapper.updateLastAccessedTime(TEST_ACCESS_TOKEN)).thenReturn(1);
 
         userSessionService.updateLastAccessedTime(TEST_ACCESS_TOKEN);
 
@@ -176,13 +176,14 @@ class UserSessionServiceImplTest {
 
     @Test
     void testRefreshSession() {
-        when(userSessionMapper.updateSessionToken(eq(TEST_ACCESS_TOKEN), eq(TEST_NEW_ACCESS_TOKEN), any(LocalDateTime.class))).thenReturn(1);
+        when(userSessionMapper.updateSessionToken(eq(TEST_ACCESS_TOKEN), eq(TEST_NEW_ACCESS_TOKEN),
+                any(LocalDateTime.class))).thenReturn(1);
 
         boolean result = userSessionService.refreshSession(TEST_ACCESS_TOKEN, TEST_NEW_ACCESS_TOKEN);
 
         assertTrue(result);
-        verify(userSessionMapper).updateSessionToken(eq(TEST_ACCESS_TOKEN), eq(TEST_NEW_ACCESS_TOKEN), any(LocalDateTime.class));
+        verify(userSessionMapper).updateSessionToken(eq(TEST_ACCESS_TOKEN), eq(TEST_NEW_ACCESS_TOKEN),
+                any(LocalDateTime.class));
     }
-
 
 }
