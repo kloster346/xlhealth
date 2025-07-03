@@ -22,10 +22,11 @@ public interface MessageService {
    * @param content        消息内容
    * @param role           消息角色
    * @param contentType    内容类型
+   * @param metadata       元数据信息
    * @return 发送的消息
    */
   Message sendMessage(Long conversationId, Long userId, String content,
-      Message.MessageRole role, Message.ContentType contentType);
+      Message.MessageRole role, Message.ContentType contentType, String metadata);
 
   /**
    * 获取对话消息列表（分页）

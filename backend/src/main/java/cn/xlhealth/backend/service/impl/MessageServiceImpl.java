@@ -5,6 +5,7 @@ import cn.xlhealth.backend.entity.Message;
 import cn.xlhealth.backend.mapper.MessageMapper;
 import cn.xlhealth.backend.service.ConversationService;
 import cn.xlhealth.backend.service.MessageService;
+import cn.xlhealth.backend.ui.advice.BusinessException;
 import cn.xlhealth.backend.ui.dto.PageResponse;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -69,7 +70,7 @@ public class MessageServiceImpl implements MessageService {
         // 创建AI回复消息
         Message aiMessage = new Message();
         aiMessage.setConversationId(conversationId);
-        aiMessage.setUserId(null); // AI消息没有用户ID
+        aiMessage.setUserId(userId); // AI消息关联到当前用户
         aiMessage.setRole(Message.MessageRole.ASSISTANT);
         aiMessage.setContentType(Message.ContentType.TEXT);
         aiMessage.setStatus(Message.MessageStatus.PROCESSING);
@@ -99,7 +100,7 @@ public class MessageServiceImpl implements MessageService {
     @Override
     @Transactional
     public Message sendMessage(Long conversationId, Long userId, String content, 
-                              Message.MessageRole role, Message.ContentType contentType) {
+                              Message.MessageRole role, Message.ContentType contentType, String metadata) {
         log.info("发送消息: conversationId={}, userId={}, role={}, contentType={}", 
                 conversationId, userId, role, contentType);
         
@@ -113,6 +114,7 @@ public class MessageServiceImpl implements MessageService {
         message.setRole(role);
         message.setContent(content);
         message.setContentType(contentType);
+        message.setMetadata(metadata);
         message.setStatus(Message.MessageStatus.SUCCESS);
         message.setCreatedTime(LocalDateTime.now());
         message.setUpdatedTime(LocalDateTime.now());
@@ -121,7 +123,7 @@ public class MessageServiceImpl implements MessageService {
         // 保存消息到数据库
         int result = messageMapper.insert(message);
         if (result <= 0) {
-            throw new RuntimeException("消息发送失败");
+            throw new BusinessException("消息发送失败");
         }
         
         // 更新对话统计信息
@@ -188,7 +190,7 @@ public class MessageServiceImpl implements MessageService {
         
         Message message = messageMapper.selectById(messageId);
         if (message == null || message.getDeleted()) {
-            throw new RuntimeException("消息不存在");
+            throw new BusinessException("消息不存在");
         }
         
         // 验证用户是否有权限访问该消息
@@ -405,7 +407,7 @@ public class MessageServiceImpl implements MessageService {
     public boolean validateUserAccessToMessage(Long messageId, Long userId) {
         Message message = messageMapper.selectById(messageId);
         if (message == null || message.getDeleted()) {
-            throw new RuntimeException("消息不存在");
+            throw new BusinessException("消息不存在");
         }
         
         // 检查用户是否有权限访问该消息所属的对话
@@ -421,11 +423,24 @@ public class MessageServiceImpl implements MessageService {
         try {
             // 通过ConversationService验证用户是否有权限访问对话
             Conversation conversation = conversationService.getConversationById(conversationId, userId);
-            return conversation != null;
+            if (conversation == null) {
+                throw new BusinessException("对话不存在或无权限访问");
+            }
+            
+            // 检查对话状态，只有ACTIVE状态的对话才能进行消息操作
+            if (conversation.getStatus() != Conversation.ConversationStatus.ACTIVE) {
+                String statusDesc = conversation.getStatus() == Conversation.ConversationStatus.ARCHIVED ? "已归档" : "已删除";
+                throw new BusinessException("对话" + statusDesc + "，无法进行消息操作");
+            }
+            
+            return true;
+        } catch (BusinessException e) {
+            // 重新抛出BusinessException
+            throw e;
         } catch (Exception e) {
             log.warn("用户无权限访问对话消息: conversationId={}, userId={}, error={}", 
                     conversationId, userId, e.getMessage());
-            throw new RuntimeException("无权限访问该对话的消息");
+            throw new BusinessException(e.getMessage());
         }
     }
 

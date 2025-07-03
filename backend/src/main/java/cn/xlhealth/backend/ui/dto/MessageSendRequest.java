@@ -12,10 +12,6 @@ import jakarta.validation.constraints.Size;
 @Schema(description = "发送消息请求")
 public class MessageSendRequest {
 
-    @Schema(description = "对话ID", example = "1")
-    @NotNull(message = "对话ID不能为空")
-    private Long conversationId;
-
     @Schema(description = "消息内容", example = "你好，我想咨询一下健康问题")
     @NotBlank(message = "消息内容不能为空")
     @Size(max = 10000, message = "消息内容长度不能超过10000个字符")
@@ -32,14 +28,6 @@ public class MessageSendRequest {
     @Schema(description = "元数据", example = "{\"source\":\"web\"}")
     @Size(max = 1000, message = "元数据长度不能超过1000个字符")
     private String metadata;
-
-    public Long getConversationId() {
-        return conversationId;
-    }
-
-    public void setConversationId(Long conversationId) {
-        this.conversationId = conversationId;
-    }
 
     public String getContent() {
         return content;

@@ -120,6 +120,12 @@ public class Message {
     @TableLogic
     private Boolean deleted;
 
+    /**
+     * 元数据信息
+     */
+    @TableField("metadata")
+    private String metadata;
+
 
 
     /**

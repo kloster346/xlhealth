@@ -4,6 +4,9 @@ import cn.xlhealth.backend.entity.Message;
 import cn.xlhealth.backend.service.MessageService;
 import cn.xlhealth.backend.ui.dto.*;
 import cn.xlhealth.backend.ui.dto.ApiResponse;
+import cn.xlhealth.backend.ui.dto.request.AIReplyRequest;
+import cn.xlhealth.backend.ui.dto.request.BatchDeleteMessageRequest;
+import cn.xlhealth.backend.ui.dto.request.MessageStatusUpdateRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import cn.xlhealth.backend.ui.advice.BusinessException;
@@ -20,14 +23,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 消息管理控制器
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/messages")
+@RequestMapping("/api/v1/conversations/{conversationId}/messages")
 @Tag(name = "消息管理", description = "消息发送、获取、删除等操作")
 public class MessageController {
 
@@ -37,19 +39,21 @@ public class MessageController {
     /**
      * 发送消息
      */
-    @PostMapping("/send")
+    @PostMapping
     @Operation(summary = "发送消息", description = "发送新消息到指定对话")
     public ResponseEntity<ApiResponse<MessageResponse>> sendMessage(
+            @Parameter(description = "对话ID") @PathVariable Long conversationId,
             @Valid @RequestBody MessageSendRequest request) {
         try {
             Long userId = getCurrentUserId();
 
             Message message = messageService.sendMessage(
-                    request.getConversationId(),
+                    conversationId,
                     userId,
                     request.getContent(),
                     request.getRole(),
-                    request.getContentType());
+                    request.getContentType(),
+                    request.getMetadata());
 
             MessageResponse response = convertToMessageResponse(message);
             return ResponseEntity.ok(ApiResponse.success(response));
@@ -62,7 +66,7 @@ public class MessageController {
     /**
      * 获取对话消息列表
      */
-    @GetMapping("/conversation/{conversationId}")
+    @GetMapping
     @Operation(summary = "获取对话消息列表", description = "分页获取指定对话的消息列表")
     public ResponseEntity<ApiResponse<IPage<MessageResponse>>> getConversationMessages(
             @Parameter(description = "对话ID") @PathVariable Long conversationId,
@@ -93,6 +97,7 @@ public class MessageController {
     @GetMapping("/{messageId}")
     @Operation(summary = "获取消息详情", description = "根据消息ID获取消息详细信息")
     public ResponseEntity<ApiResponse<MessageResponse>> getMessageById(
+            @Parameter(description = "对话ID") @PathVariable Long conversationId,
             @Parameter(description = "消息ID") @PathVariable Long messageId) {
         try {
             Long userId = getCurrentUserId();
@@ -113,6 +118,7 @@ public class MessageController {
     @DeleteMapping("/{messageId}")
     @Operation(summary = "删除消息", description = "软删除指定消息")
     public ResponseEntity<ApiResponse<Boolean>> deleteMessage(
+            @Parameter(description = "对话ID") @PathVariable Long conversationId,
             @Parameter(description = "消息ID") @PathVariable Long messageId) {
         try {
             Long userId = getCurrentUserId();
@@ -131,11 +137,12 @@ public class MessageController {
     @DeleteMapping("/batch")
     @Operation(summary = "批量删除消息", description = "批量软删除多条消息")
     public ResponseEntity<ApiResponse<Boolean>> batchDeleteMessages(
-            @Parameter(description = "消息ID列表") @RequestBody List<Long> messageIds) {
+            @Parameter(description = "对话ID") @PathVariable Long conversationId,
+            @Parameter(description = "批量删除请求") @RequestBody @Valid BatchDeleteMessageRequest request) {
         try {
             Long userId = getCurrentUserId();
 
-            Integer deletedCount = messageService.batchDeleteMessages(messageIds, userId);
+            Integer deletedCount = messageService.batchDeleteMessages(request.getMessageIds(), userId);
             boolean success = deletedCount != null && deletedCount > 0;
             return ResponseEntity.ok(ApiResponse.success(success));
         } catch (Exception e) {
@@ -147,7 +154,7 @@ public class MessageController {
     /**
      * 统计对话消息数量
      */
-    @GetMapping("/conversation/{conversationId}/count")
+    @GetMapping("/count")
     @Operation(summary = "统计对话消息数量", description = "获取指定对话的消息总数")
     public ResponseEntity<ApiResponse<Long>> countConversationMessages(
             @Parameter(description = "对话ID") @PathVariable Long conversationId) {
@@ -165,7 +172,7 @@ public class MessageController {
     /**
      * 获取对话最后一条消息
      */
-    @GetMapping("/conversation/{conversationId}/last")
+    @GetMapping("/last")
     @Operation(summary = "获取对话最后一条消息", description = "获取指定对话的最新消息")
     public ResponseEntity<ApiResponse<MessageResponse>> getLastConversationMessage(
             @Parameter(description = "对话ID") @PathVariable Long conversationId) {
@@ -188,7 +195,7 @@ public class MessageController {
     /**
      * 清空对话所有消息
      */
-    @DeleteMapping("/conversation/{conversationId}/clear")
+    @DeleteMapping("/clear")
     @Operation(summary = "清空对话所有消息", description = "软删除指定对话的所有消息")
     public ResponseEntity<ApiResponse<Boolean>> clearConversationMessages(
             @Parameter(description = "对话ID") @PathVariable Long conversationId) {
@@ -207,14 +214,14 @@ public class MessageController {
      * 生成AI回复
      */
     @PostMapping("/ai-reply")
-    @Operation(summary = "生成AI回复", description = "为用户消息生成AI回复")
+    @Operation(summary = "生成AI回复", description = "为指定对话生成AI回复")
     public ResponseEntity<ApiResponse<MessageResponse>> generateAIReply(
-            @Parameter(description = "对话ID") @RequestParam Long conversationId,
-            @Parameter(description = "用户消息内容") @RequestParam String userMessage) {
+            @Parameter(description = "对话ID") @PathVariable Long conversationId,
+            @Parameter(description = "AI回复请求") @RequestBody @Valid AIReplyRequest request) {
         try {
             Long userId = getCurrentUserId();
 
-            Message aiMessage = messageService.generateAIReply(conversationId, userId, userMessage);
+            Message aiMessage = messageService.generateAIReply(conversationId, userId, request.getPrompt());
             MessageResponse response = convertToMessageResponse(aiMessage);
 
             return ResponseEntity.ok(ApiResponse.success(response));
@@ -230,7 +237,7 @@ public class MessageController {
     @GetMapping("/statistics")
     @Operation(summary = "获取用户消息统计", description = "获取当前用户的消息统计信息")
     public ResponseEntity<ApiResponse<MessageStatisticsResponse>> getUserMessageStatistics(
-            @Parameter(description = "对话ID（可选）") @RequestParam(required = false) Long conversationId) {
+            @Parameter(description = "对话ID") @PathVariable Long conversationId) {
         try {
             Long userId = getCurrentUserId();
 
@@ -251,15 +258,19 @@ public class MessageController {
     @PutMapping("/{messageId}/status")
     @Operation(summary = "更新消息状态", description = "更新指定消息的状态")
     public ResponseEntity<ApiResponse<Boolean>> updateMessageStatus(
+            @Parameter(description = "对话ID") @PathVariable Long conversationId,
             @Parameter(description = "消息ID") @PathVariable Long messageId,
-            @Parameter(description = "新状态") @RequestParam Message.MessageStatus status) {
+            @Parameter(description = "状态更新请求") @RequestBody @Valid MessageStatusUpdateRequest request) {
         try {
             Long userId = getCurrentUserId();
-            boolean success = messageService.updateMessageStatus(messageId, status, userId);
+            boolean success = messageService.updateMessageStatus(messageId, request.getStatus(), userId);
             return ResponseEntity.ok(ApiResponse.success(success));
+        } catch (BusinessException e) {
+            log.error("更新消息状态失败: {}", e.getMessage());
+            throw e;
         } catch (Exception e) {
             log.error("更新消息状态失败", e);
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+            throw BusinessException.badRequest("更新消息状态失败: " + e.getMessage());
         }
     }
 
