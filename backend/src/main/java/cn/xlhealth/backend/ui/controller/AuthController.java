@@ -90,8 +90,8 @@ public class AuthController {
                     // 执行登出操作
                     boolean success = userSessionService.deleteSession(token);
                     if (success) {
-                        String username = jwtUtils.getUsernameFromToken(token);
-                        log.info("用户登出成功: username={}", username);
+                        String userIdStr = jwtUtils.getUserIdFromToken(token);
+                        log.info("用户登出成功: userId={}", userIdStr);
                         return ApiResponse.success("登出成功");
                     } else {
                         return ApiResponse.error("LOGOUT_FAILED", "登出操作失败");
@@ -167,15 +167,23 @@ public class AuthController {
             }
             
             // 获取用户信息
-            String username = jwtUtils.getUsernameFromToken(newToken);
-            if (username == null || username.trim().isEmpty()) {
-                log.error("刷新token失败: 无法从新token中提取用户名");
-                return ResponseEntity.badRequest().body(ApiResponse.error("USERNAME_EXTRACTION_FAILED", "无法提取用户信息"));
+            String userIdStr = jwtUtils.getUserIdFromToken(newToken);
+            if (userIdStr == null || userIdStr.trim().isEmpty()) {
+                log.error("刷新token失败: 无法从新token中提取用户ID");
+                return ResponseEntity.badRequest().body(ApiResponse.error("USERID_EXTRACTION_FAILED", "无法提取用户信息"));
             }
             
-            var user = userService.findByUsername(username);
+            Long userId;
+            try {
+                userId = Long.parseLong(userIdStr);
+            } catch (NumberFormatException e) {
+                log.error("刷新token失败: 用户ID格式无效 - {}", userIdStr);
+                return ResponseEntity.badRequest().body(ApiResponse.error("INVALID_USERID_FORMAT", "用户ID格式无效"));
+            }
+            
+            var user = userService.findById(userId);
             if (user == null) {
-                log.error("刷新token失败: 用户不存在 - {}", username);
+                log.error("刷新token失败: 用户不存在 - {}", userId);
                 return ResponseEntity.badRequest().body(ApiResponse.error("USER_NOT_FOUND", "用户不存在"));
             }
             
@@ -202,7 +210,7 @@ public class AuthController {
             Long jwtExpiration = 86400L; // 默认24小时，可以从配置中获取
             AuthResponse authResponse = new AuthResponse(newToken, "Bearer", jwtExpiration, userInfo);
             
-            log.info("刷新token成功: username={}", username);
+            log.info("刷新token成功: userId={}", userId);
             return ResponseEntity.ok(ApiResponse.success("刷新成功", authResponse));
             
         } catch (io.jsonwebtoken.JwtException e) {

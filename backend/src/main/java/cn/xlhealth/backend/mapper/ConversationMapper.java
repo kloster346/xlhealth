@@ -30,6 +30,12 @@ public interface ConversationMapper extends BaseMapper<Conversation> {
      */
     @Select("SELECT * FROM conversations WHERE status = #{status} AND deleted = 0 ORDER BY created_time DESC")
     List<Conversation> findByStatus(@Param("status") Conversation.ConversationStatus status);
+    
+    /**
+     * 根据用户ID和对话状态查询对话列表
+     */
+    @Select("SELECT * FROM conversations WHERE user_id = #{userId} AND status = #{status} AND deleted = 0 ORDER BY created_time DESC")
+    List<Conversation> findByUserIdAndStatus(@Param("userId") Long userId, @Param("status") Conversation.ConversationStatus status);
 
     /**
      * 统计用户的对话总数

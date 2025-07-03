@@ -101,6 +101,7 @@ public class UserController {
 
     /**
      * 获取当前登录用户ID
+     * 注意：JWT验证后，authentication.getName()直接返回用户ID字符串
      */
     private Long getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -108,17 +109,17 @@ public class UserController {
             throw new RuntimeException("用户未登录");
         }
 
-        String username = authentication.getName();
-        if ("anonymousUser".equals(username)) {
+        String userIdStr = authentication.getName();
+        if ("anonymousUser".equals(userIdStr)) {
             throw new RuntimeException("用户未登录");
         }
 
-        // 根据用户名查找用户ID
-        cn.xlhealth.backend.entity.User user = userService.findByUsername(username);
-        if (user == null) {
-            throw new RuntimeException("用户不存在");
+        try {
+            // 直接将用户ID字符串转换为Long类型
+            return Long.parseLong(userIdStr);
+        } catch (NumberFormatException e) {
+            log.error("无效的用户ID格式: {}", userIdStr, e);
+            throw new RuntimeException("用户认证信息异常");
         }
-
-        return user.getId();
     }
 }

@@ -35,9 +35,16 @@ public class JwtUtils {
     }
 
     /**
-     * 从token中提取用户名
+     * 从token中提取用户名（兼容旧版本）
      */
     public String getUsernameFromToken(String token) {
+        return getClaimFromToken(token, Claims::getSubject);
+    }
+
+    /**
+     * 从token中提取用户ID
+     */
+    public String getUserIdFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
     }
 

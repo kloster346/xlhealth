@@ -154,8 +154,8 @@ public class UserServiceImpl implements UserService {
      * 创建认证响应
      */
     private AuthResponse createAuthResponse(User user) {
-        // 生成JWT token
-        String token = jwtUtils.generateToken(user.getUsername());
+        // 生成JWT token（使用用户ID作为subject）
+        String token = jwtUtils.generateToken(user.getId().toString());
 
         // 获取请求信息
         String ipAddress = getClientIpAddress();

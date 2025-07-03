@@ -22,7 +22,8 @@ import java.util.List;
 
 /**
  * JWT请求过滤器
- * 从请求中提取JWT token，验证并设置Spring Security上下文
+ * 从请求中提取JWT token，验证token有效性，提取用户ID并设置Spring Security上下文
+ * 注意：此过滤器只负责JWT验证和认证信息设置，不负责用户对象的获取
  */
 @Slf4j
 @Component
@@ -44,33 +45,33 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         
         log.debug("处理请求: {} {}", request.getMethod(), requestURI);
         
-        String username = null;
+        String userId = null;
         String jwtToken = null;
         
         // JWT Token格式: "Bearer token"
         if (StringUtils.hasText(requestTokenHeader) && requestTokenHeader.startsWith("Bearer ")) {
             jwtToken = requestTokenHeader.substring(7);
             try {
-                username = jwtUtils.getUsernameFromToken(jwtToken);
-                log.debug("从JWT token中提取用户名: {}", username);
+                userId = jwtUtils.getUserIdFromToken(jwtToken);
+                log.debug("从JWT token中提取用户ID: {}", userId);
             } catch (Exception e) {
-                log.warn("无法从JWT token中获取用户名: {}", e.getMessage());
+                log.warn("无法从JWT token中获取用户ID: {}", e.getMessage());
             }
         } else {
             log.debug("JWT Token不存在或格式不正确");
         }
         
         // 验证token并设置认证上下文
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             
             try {
                 // 验证JWT token
-                if (jwtUtils.validateToken(jwtToken, username)) {
-                    log.debug("JWT token验证成功，用户: {}", username);
+                if (jwtUtils.validateToken(jwtToken, userId)) {
+                    log.debug("JWT token验证成功，用户ID: {}", userId);
                     
                     // 检查会话是否有效
                     if (userSessionService.isSessionValid(jwtToken)) {
-                        log.debug("用户会话有效，用户: {}", username);
+                        log.debug("用户会话有效，用户ID: {}", userId);
                         
                         // 创建认证对象
                         // 这里可以根据需要添加用户角色/权限
@@ -78,21 +79,22 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                             new SimpleGrantedAuthority("ROLE_USER")
                         );
                         
+                        // 使用用户ID作为principal，这样Controller中可以直接获取用户ID
                         UsernamePasswordAuthenticationToken authToken = 
                             new UsernamePasswordAuthenticationToken(
-                                username, null, authorities);
+                                userId, null, authorities);
                         
                         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         
                         // 设置Spring Security上下文
                         SecurityContextHolder.getContext().setAuthentication(authToken);
                         
-                        log.debug("已设置Spring Security认证上下文，用户: {}", username);
+                        log.debug("已设置Spring Security认证上下文，用户ID: {}", userId);
                     } else {
-                        log.warn("用户会话无效或已过期，用户: {}", username);
+                        log.warn("用户会话无效或已过期，用户ID: {}", userId);
                     }
                 } else {
-                    log.warn("JWT token验证失败，用户: {}", username);
+                    log.warn("JWT token验证失败，用户ID: {}", userId);
                 }
             } catch (Exception e) {
                 log.error("JWT token验证过程中发生错误: {}", e.getMessage(), e);
