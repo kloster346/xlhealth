@@ -2,7 +2,6 @@ package cn.xlhealth.backend.service;
 
 import cn.xlhealth.backend.entity.User;
 import cn.xlhealth.backend.ui.dto.*;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 /**
  * 用户服务接口

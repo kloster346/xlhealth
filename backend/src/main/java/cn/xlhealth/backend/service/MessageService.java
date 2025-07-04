@@ -54,6 +54,15 @@ public interface MessageService {
       Long conversationId, Long userId, Page<Message> page, String sortBy, String sortOrder);
 
   /**
+   * 获取对话消息列表（用于上下文管理）
+   * 
+   * @param conversationId 对话ID
+   * @param limit          限制数量
+   * @return 消息列表
+   */
+  List<Message> getConversationMessages(Long conversationId, Integer limit);
+
+  /**
    * 获取消息详情
    * 
    * @param messageId 消息ID

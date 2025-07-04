@@ -7,7 +7,6 @@ import cn.xlhealth.backend.service.UserService;
 import cn.xlhealth.backend.service.UserSessionService;
 import cn.xlhealth.backend.ui.advice.BusinessException;
 import cn.xlhealth.backend.ui.dto.*;
-import org.springframework.beans.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

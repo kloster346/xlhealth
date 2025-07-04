@@ -185,6 +185,28 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
+    public List<Message> getConversationMessages(Long conversationId, Integer limit) {
+        log.info("获取对话消息列表（上下文管理）: conversationId={}, limit={}", conversationId, limit);
+        
+        // 构建查询条件
+        QueryWrapper<Message> queryWrapper = new QueryWrapper<Message>();
+        queryWrapper.eq("conversation_id", conversationId)
+                   .eq("deleted", false)
+                   .orderByDesc("created_time");
+        
+        // 设置限制数量
+        if (limit != null && limit > 0) {
+            queryWrapper.last("LIMIT " + limit);
+        }
+        
+        // 执行查询
+        List<Message> messages = messageMapper.selectList(queryWrapper);
+        
+        log.info("获取对话消息列表成功: conversationId={}, count={}", conversationId, messages.size());
+        return messages;
+    }
+
+    @Override
     public Message getMessageById(Long messageId, Long userId) {
         log.info("获取消息详情: messageId={}, userId={}", messageId, userId);
         

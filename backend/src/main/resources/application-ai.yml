@@ -1,0 +1,136 @@
+# AI服务配置
+ai:
+  service:
+    # 是否启用模拟模式
+    mock-mode: true
+    # 服务提供商类型 (MOCK, OPENAI, AZURE, etc.)
+    provider: MOCK
+    
+    # 上下文配置
+    context:
+      # 是否启用上下文管理
+      enabled: true
+      # 最大上下文消息数量
+      max-messages: 20
+      # 上下文过期时间（小时）
+      expiry-hours: 24
+      # 是否启用上下文摘要
+      summary-enabled: true
+      # 摘要触发的消息数量阈值
+      summary-threshold: 10
+    
+    # 质量评估配置
+    quality:
+      # 是否启用质量评估
+      enabled: true
+      # 最低质量分数阈值
+      min-score: 60
+      # 质量评估权重配置
+      weights:
+        relevance: 0.3
+        professionalism: 0.2
+        emotional: 0.2
+        safety: 0.2
+        completeness: 0.1
+    
+    # 监控配置
+    monitoring:
+      # 是否启用监控
+      enabled: true
+      # 健康检查阈值
+      health-thresholds:
+        min-success-rate: 0.8
+        max-response-time: 5000
+        max-error-rate: 0.2
+      # 统计数据保留时间（小时）
+      stats-retention-hours: 24
+    
+    # 降级配置
+    fallback:
+      # 是否启用降级
+      enabled: true
+      # 默认降级消息
+      default-message: "抱歉，我现在无法为您提供最佳回复。请稍后重试，或联系专业心理咨询师获得帮助。"
+      # 降级触发条件
+      triggers:
+        # 质量分数低于阈值
+        quality-below-threshold: true
+        # 服务不可用
+        service-unavailable: true
+        # 响应时间过长
+        response-timeout: true
+    
+    # Mock服务特定配置
+    mock:
+      # 模拟响应延迟范围（毫秒）
+      response-delay:
+        min: 500
+        max: 2000
+      # 模拟错误率（0.0-1.0）
+      error-rate: 0.05
+      # 预定义回复模板
+      reply-templates:
+        emotional-support:
+          - "我理解您现在的感受，这确实不容易。"
+          - "您的感受是完全可以理解的，很多人都会有类似的经历。"
+          - "感谢您愿意分享这些，我会陪伴您一起面对。"
+        cognitive-guidance:
+          - "让我们一起来分析一下这个情况。"
+          - "从另一个角度来看，也许事情并不像看起来那么糟糕。"
+          - "您觉得是什么让您产生了这样的想法？"
+        behavioral-advice:
+          - "我建议您可以尝试一些放松技巧。"
+          - "规律的作息和适量运动可能会有帮助。"
+          - "您可以考虑寻求专业心理咨询师的帮助。"
+        information-gathering:
+          - "能告诉我更多关于这个情况的细节吗？"
+          - "这种感觉持续多长时间了？"
+          - "您之前是否遇到过类似的情况？"
+
+# 日志配置
+logging:
+  level:
+    cn.xlhealth.backend.service.ai: DEBUG
+    cn.xlhealth.backend.config: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%logger{36}] - %msg%n"
+
+# 缓存配置（用于上下文管理）
+spring:
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=24h
+    cache-names:
+      - ai-context
+      - ai-stats
+
+# 任务调度配置
+  task:
+    scheduling:
+      pool:
+        size: 2
+      thread-name-prefix: ai-scheduler-
+
+# 验证配置
+  validation:
+    enabled: true
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+  health:
+    ai:
+      enabled: true
+
+# 自定义健康检查
+health:
+  ai-service:
+    enabled: true
+    timeout: 5s
