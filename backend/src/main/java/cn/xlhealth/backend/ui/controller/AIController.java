@@ -4,6 +4,7 @@ import cn.xlhealth.backend.ui.dto.ApiResponse;
 import cn.xlhealth.backend.service.ai.AIServiceManager;
 import cn.xlhealth.backend.service.ai.dto.AIRequest;
 import cn.xlhealth.backend.service.ai.dto.AIResponse;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,10 +32,12 @@ public class AIController {
     private AIServiceManager aiServiceManager;
 
     /**
-     * 发送消息给AI并获取回复
+     * 纯AI服务调用（不涉及消息存储）
+     * 注意：此接口仅用于AI服务测试和独立调用，不会保存消息到数据库
+     * 如需完整的对话管理，请使用 MessageController 的 /ai-reply 接口
      */
     @PostMapping("/chat")
-    @Operation(summary = "AI对话", description = "发送用户消息给AI并获取回复")
+    @Operation(summary = "AI服务调用", description = "直接调用AI服务获取回复（不保存消息）")
     public ResponseEntity<ApiResponse<AIResponse>> chat(
             @Valid @RequestBody ChatRequest chatRequest,
             @Parameter(description = "用户ID") @RequestHeader(value = "X-User-Id", required = false) String userId) {
@@ -45,24 +48,28 @@ public class AIController {
                 userId = "guest_" + UUID.randomUUID().toString().substring(0, 8);
             }
 
+            // 转换用户ID和对话ID
+            Long userIdLong = (long) Math.abs(userId.hashCode());
+            Long conversationIdLong = (long) Math.abs(chatRequest.getConversationId().hashCode());
+
             // 构建AI请求
             AIRequest aiRequest = new AIRequest();
-            aiRequest.setUserId((long) Math.abs(userId.hashCode()));
-            aiRequest.setConversationId((long) Math.abs(chatRequest.getConversationId().hashCode()));
+            aiRequest.setUserId(userIdLong);
+            aiRequest.setConversationId(conversationIdLong);
             aiRequest.setUserMessage(chatRequest.getMessage());
             aiRequest.setEmotionalState(chatRequest.getEmotionalState());
             aiRequest.setParameters(chatRequest.getParameters());
             aiRequest.setTimestamp(System.currentTimeMillis());
 
-            // 处理请求
+            // 处理AI请求（仅调用AI服务，不保存消息）
             AIResponse response = aiServiceManager.processRequest(aiRequest);
 
             if (response.isSuccess()) {
-                logger.info("AI chat successful for user: {}, conversation: {}", userId,
-                        chatRequest.getConversationId());
+                logger.info("AI service call successful for user: {}, conversation: {}",
+                        userId, chatRequest.getConversationId());
                 return ResponseEntity.ok(ApiResponse.success(response));
             } else {
-                logger.warn("AI chat failed for user: {}, error: {}", userId, response.getErrorMessage());
+                logger.warn("AI service call failed for user: {}, error: {}", userId, response.getErrorMessage());
                 return ResponseEntity.ok(ApiResponse.error(response.getErrorMessage()));
             }
 
@@ -71,8 +78,8 @@ public class AIController {
             return ResponseEntity.badRequest().body(ApiResponse.badRequest("请求参数无效: " + e.getMessage()));
 
         } catch (Exception e) {
-            logger.error("Error processing chat request", e);
-            return ResponseEntity.internalServerError().body(ApiResponse.internalError("服务暂时不可用，请稍后重试"));
+            logger.error("Error processing AI service call", e);
+            return ResponseEntity.internalServerError().body(ApiResponse.internalError("AI服务暂时不可用，请稍后重试"));
         }
     }
 

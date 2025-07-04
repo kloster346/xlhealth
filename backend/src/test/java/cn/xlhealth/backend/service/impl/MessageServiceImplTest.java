@@ -4,8 +4,6 @@ import cn.xlhealth.backend.entity.Message;
 import cn.xlhealth.backend.mapper.MessageMapper;
 import cn.xlhealth.backend.service.ConversationService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,7 +48,7 @@ class MessageServiceImplTest {
                 testMessage.setRole(Message.MessageRole.USER);
                 testMessage.setContent("测试消息内容");
                 testMessage.setContentType(Message.ContentType.TEXT);
-                testMessage.setStatus(Message.MessageStatus.SENT);
+                testMessage.setStatus(Message.MessageStatus.SUCCESS);
                 testMessage.setCreatedTime(LocalDateTime.now());
                 testMessage.setUpdatedTime(LocalDateTime.now());
                 testMessage.setDeleted(false);
@@ -71,7 +69,8 @@ class MessageServiceImplTest {
                                 testUserId,
                                 "测试消息",
                                 Message.MessageRole.USER,
-                                Message.ContentType.TEXT);
+                                Message.ContentType.TEXT,
+                                null);
 
                 // 验证结果
                 assertNotNull(result);
@@ -80,7 +79,7 @@ class MessageServiceImplTest {
                 assertEquals(Message.MessageRole.USER, result.getRole());
                 assertEquals("测试消息", result.getContent());
                 assertEquals(Message.ContentType.TEXT, result.getContentType());
-                assertEquals(Message.MessageStatus.SENT, result.getStatus());
+                assertEquals(Message.MessageStatus.SUCCESS, result.getStatus());
                 assertFalse(result.getDeleted());
 
                 // 验证方法调用
@@ -150,10 +149,10 @@ class MessageServiceImplTest {
                                 .thenReturn(Arrays.asList(testMessage, testMessage, testMessage));
 
                 // 执行测试
-                boolean result = messageService.batchDeleteMessages(messageIds, testUserId);
+                Integer result = messageService.batchDeleteMessages(messageIds, testUserId);
 
                 // 验证结果
-                assertTrue(result);
+                assertEquals(3, result);
 
                 // 验证方法调用
                 verify(messageMapper, times(1)).update(eq(null), any());
@@ -200,7 +199,7 @@ class MessageServiceImplTest {
                 assertEquals(Message.MessageRole.ASSISTANT, result.getRole());
                 assertTrue(result.getContent().contains("用户消息"));
                 assertEquals(Message.ContentType.TEXT, result.getContentType());
-                assertEquals(Message.MessageStatus.SENT, result.getStatus());
+                assertEquals(Message.MessageStatus.SUCCESS, result.getStatus());
                 assertEquals("gpt-3.5-turbo", result.getModelName());
                 assertFalse(result.getDeleted());
 
@@ -230,7 +229,7 @@ class MessageServiceImplTest {
                 assertNotNull(result);
                 assertEquals(10L, result.getTotalMessages());
                 assertEquals(6L, result.getUserMessages());
-                assertEquals(4L, result.getAssistantMessages());
+                assertEquals(4L, result.getAiMessages());
                 assertEquals(1000, result.getTotalTokens());
 
                 // 验证方法调用次数

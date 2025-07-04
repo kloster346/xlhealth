@@ -60,7 +60,7 @@ class UserSessionServiceImplTest {
         testSession.setUserAgent(TEST_USER_AGENT);
         testSession.setLastActivityTime(LocalDateTime.now());
         testSession.setExpiresAt(LocalDateTime.now().plusHours(1));
-        testSession.setStatus(UserSession.SessionStatus.ACTIVE.getValue());
+        testSession.setStatus(UserSession.SessionStatus.ACTIVE);
         testSession.setDeleted(false);
     }
 
@@ -75,7 +75,7 @@ class UserSessionServiceImplTest {
         assertEquals(TEST_ACCESS_TOKEN, result.getSessionToken());
         assertEquals(TEST_IP_ADDRESS, result.getIpAddress());
         assertEquals(TEST_USER_AGENT, result.getUserAgent());
-        assertEquals(UserSession.SessionStatus.ACTIVE.getValue(), result.getStatus());
+        assertEquals(UserSession.SessionStatus.ACTIVE, result.getStatus());
         assertNotNull(result.getLastActivityTime());
         assertNotNull(result.getExpiresAt());
         assertFalse(result.getDeleted());

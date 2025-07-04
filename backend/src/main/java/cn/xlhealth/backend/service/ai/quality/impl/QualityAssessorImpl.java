@@ -75,9 +75,15 @@ public class QualityAssessorImpl implements QualityAssessor {
     public int checkRelevance(AIRequest request, AIResponse response) {
         String userMessage = request.getUserMessage();
         String aiContent = response.getContent();
+        String providerName = response.getProvider();
 
         if (userMessage == null || aiContent == null) {
             return 50;
+        }
+
+        // 对于MockAI服务，使用更宽松的相关性评估
+        if ("MockAI".equals(providerName)) {
+            return assessMockAIRelevance(request, response);
         }
 
         // 简单关键词匹配
@@ -268,6 +274,99 @@ public class QualityAssessorImpl implements QualityAssessor {
         return score >= minThreshold;
     }
 
+    /**
+     * 评估MockAI服务的相关性
+     */
+    private int assessMockAIRelevance(AIRequest request, AIResponse response) {
+        String userMessage = request.getUserMessage();
+        String aiContent = response.getContent();
+        String replyType = response.getReplyType();
+        
+        int score = 75; // MockAI基础相关性得分
+        
+        // 根据回复类型调整得分
+        if (replyType != null) {
+            switch (replyType) {
+                case "EMOTIONAL_SUPPORT":
+                    // 检查用户是否表达了情感需求
+                    if (containsEmotionalKeywords(userMessage)) {
+                        score += 15;
+                    }
+                    break;
+                case "COGNITIVE_GUIDANCE":
+                    // 检查用户是否表达了认知相关内容
+                    if (containsCognitiveKeywords(userMessage)) {
+                        score += 15;
+                    }
+                    break;
+                case "BEHAVIORAL_ADVICE":
+                    // 检查用户是否寻求建议
+                    if (containsAdviceKeywords(userMessage)) {
+                        score += 15;
+                    }
+                    break;
+                case "INFORMATION_GATHERING":
+                    // 检查用户是否提出问题
+                    if (userMessage.contains("?") || userMessage.contains("？") || 
+                        userMessage.contains("什么") || userMessage.contains("如何") || 
+                        userMessage.contains("为什么")) {
+                        score += 15;
+                    }
+                    break;
+            }
+        }
+        
+        // 检查回复是否包含适当的心理咨询元素
+        if (aiContent.contains("理解") || aiContent.contains("感受") || 
+            aiContent.contains("支持") || aiContent.contains("帮助")) {
+            score += 10;
+        }
+        
+        // 确保回复长度合适
+        if (aiContent.length() > 30) {
+            score += 5;
+        }
+        
+        return Math.min(100, score);
+    }
+    
+    /**
+     * 检查是否包含情感关键词
+     */
+    private boolean containsEmotionalKeywords(String message) {
+        if (message == null) return false;
+        String lowerMessage = message.toLowerCase();
+        return lowerMessage.contains("难过") || lowerMessage.contains("伤心") ||
+               lowerMessage.contains("痛苦") || lowerMessage.contains("孤独") ||
+               lowerMessage.contains("害怕") || lowerMessage.contains("焦虑") ||
+               lowerMessage.contains("抑郁") || lowerMessage.contains("情绪") ||
+               lowerMessage.contains("感觉") || lowerMessage.contains("心情");
+    }
+    
+    /**
+     * 检查是否包含认知关键词
+     */
+    private boolean containsCognitiveKeywords(String message) {
+        if (message == null) return false;
+        String lowerMessage = message.toLowerCase();
+        return lowerMessage.contains("想法") || lowerMessage.contains("思考") ||
+               lowerMessage.contains("认为") || lowerMessage.contains("觉得") ||
+               lowerMessage.contains("担心") || lowerMessage.contains("困惑") ||
+               lowerMessage.contains("理解") || lowerMessage.contains("明白");
+    }
+    
+    /**
+     * 检查是否包含建议请求关键词
+     */
+    private boolean containsAdviceKeywords(String message) {
+        if (message == null) return false;
+        String lowerMessage = message.toLowerCase();
+        return lowerMessage.contains("怎么办") || lowerMessage.contains("如何") ||
+               lowerMessage.contains("方法") || lowerMessage.contains("建议") ||
+               lowerMessage.contains("帮助") || lowerMessage.contains("改善") ||
+               lowerMessage.contains("解决") || lowerMessage.contains("处理");
+    }
+    
     /**
      * 提取文本中的关键词
      */

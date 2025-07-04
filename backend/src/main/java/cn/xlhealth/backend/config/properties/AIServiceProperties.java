@@ -1,12 +1,10 @@
 package cn.xlhealth.backend.config.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 /**
  * AI服务配置属性
  */
-@Component
 @ConfigurationProperties(prefix = "ai.service")
 public class AIServiceProperties {
     

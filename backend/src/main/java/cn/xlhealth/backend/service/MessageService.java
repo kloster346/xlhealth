@@ -1,5 +1,6 @@
 package cn.xlhealth.backend.service;
 
+import cn.xlhealth.backend.dto.AIReplyRequest;
 import cn.xlhealth.backend.entity.Message;
 import cn.xlhealth.backend.ui.dto.PageResponse;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -143,6 +144,16 @@ public interface MessageService {
    * @return AI回复消息
    */
   Message generateAIReply(Long conversationId, Long userId, String userMessage);
+
+  /**
+   * 生成AI回复（增强版）
+   * 
+   * @param conversationId 对话ID
+   * @param userId         用户ID
+   * @param request        AI回复请求
+   * @return AI回复消息
+   */
+  Message generateAIReply(Long conversationId, Long userId, AIReplyRequest request);
 
   /**
    * 验证用户是否有权限访问消息

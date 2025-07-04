@@ -481,11 +481,8 @@
             }
             
             try {
-                const response = await fetch(`/api/ai/context?conversationId=${conversationId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-User-Id': userId
-                    }
+                const response = await fetch(`/api/ai/context?userId=${userId}&conversationId=${conversationId}`, {
+                    method: 'DELETE'
                 });
                 
                 const result = await response.json();
@@ -509,11 +506,7 @@
         // 显示对话摘要
         async function showSummary() {
             try {
-                const response = await fetch(`/api/ai/context/summary?conversationId=${conversationId}`, {
-                    headers: {
-                        'X-User-Id': userId
-                    }
-                });
+                const response = await fetch(`/api/ai/context/summary?userId=${userId}&conversationId=${conversationId}`);
                 
                 const result = await response.json();
                 if (result.code === 200) {

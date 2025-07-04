@@ -4,7 +4,7 @@ import cn.xlhealth.backend.entity.Message;
 import cn.xlhealth.backend.service.MessageService;
 import cn.xlhealth.backend.ui.dto.*;
 import cn.xlhealth.backend.ui.dto.ApiResponse;
-import cn.xlhealth.backend.ui.dto.request.AIReplyRequest;
+import cn.xlhealth.backend.dto.AIReplyRequest;
 import cn.xlhealth.backend.ui.dto.request.BatchDeleteMessageRequest;
 import cn.xlhealth.backend.ui.dto.request.MessageStatusUpdateRequest;
 import org.springframework.security.core.Authentication;
@@ -212,20 +212,17 @@ public class MessageController {
      * 生成AI回复
      */
     @PostMapping("/ai-reply")
-    @Operation(summary = "生成AI回复", description = "为指定对话生成AI回复")
-    public ResponseEntity<ApiResponse<MessageResponse>> generateAIReply(
+    @Operation(summary = "生成AI回复", description = "根据用户输入生成AI回复")
+    public ApiResponse<Message> generateAIReply(
             @Parameter(description = "对话ID") @PathVariable Long conversationId,
-            @Parameter(description = "AI回复请求") @RequestBody @Valid AIReplyRequest request) {
+            @RequestBody @Valid AIReplyRequest request) {
         try {
             Long userId = getCurrentUserId();
-
-            Message aiMessage = messageService.generateAIReply(conversationId, userId, request.getPrompt());
-            MessageResponse response = convertToMessageResponse(aiMessage);
-
-            return ResponseEntity.ok(ApiResponse.success(response));
+            Message aiReply = messageService.generateAIReply(conversationId, userId, request);
+            return ApiResponse.success(aiReply);
         } catch (Exception e) {
             log.error("生成AI回复失败", e);
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+            return ApiResponse.error("生成AI回复失败: " + e.getMessage());
         }
     }
 

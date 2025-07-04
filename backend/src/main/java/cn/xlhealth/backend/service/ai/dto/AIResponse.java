@@ -44,6 +44,11 @@ public class AIResponse {
     private Long responseTime;
     
     /**
+     * Token使用数量
+     */
+    private Integer tokenCount;
+    
+    /**
      * 扩展信息
      */
     private Map<String, Object> metadata;
@@ -151,5 +156,13 @@ public class AIResponse {
     
     public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
+    }
+    
+    public Integer getTokenCount() {
+        return tokenCount;
+    }
+    
+    public void setTokenCount(Integer tokenCount) {
+        this.tokenCount = tokenCount;
     }
 }
