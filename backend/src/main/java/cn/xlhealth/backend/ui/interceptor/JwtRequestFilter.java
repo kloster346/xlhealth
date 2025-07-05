@@ -115,6 +115,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 path.startsWith("/api/v1/auth/login") ||
                 path.startsWith("/api/v1/auth/validate") ||
                 path.startsWith("/api/v1/health") ||
+                path.startsWith("/api/v1/files") || // 静态文件访问
                 path.startsWith("/actuator") ||
                 path.startsWith("/swagger-ui") ||
                 path.startsWith("/v3/api-docs") ||

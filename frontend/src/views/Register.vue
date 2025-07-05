@@ -13,10 +13,10 @@
         class="register-form"
         @submit.prevent="handleRegister"
       >
-        <el-form-item prop="nickname">
+        <el-form-item prop="username">
           <el-input
-            v-model="registerForm.nickname"
-            placeholder="请输入昵称"
+            v-model="registerForm.username"
+            placeholder="请输入用户名"
             prefix-icon="User"
             size="large"
           />
@@ -91,7 +91,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { validateEmail } from '../utils/validation'
-import { registerUser } from '../api/auth'
+import { registerUser } from '../api/services'
 
 export default {
   name: 'RegisterPage',
@@ -102,7 +102,7 @@ export default {
     
     // 表单数据
     const registerForm = reactive({
-      nickname: '',
+      username: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -130,9 +130,10 @@ export default {
     
     // 表单验证规则
     const registerRules = {
-      nickname: [
-        { required: true, message: '请输入昵称', trigger: 'blur' },
-        { min: 2, max: 20, message: '昵称长度在2到20个字符', trigger: 'blur' }
+      username: [
+        { required: true, message: '请输入用户名', trigger: 'blur' },
+        { min: 3, max: 20, message: '用户名长度在3到20个字符', trigger: 'blur' },
+        { pattern: /^[a-zA-Z0-9_]+$/, message: '用户名只能包含字母、数字和下划线', trigger: 'blur' }
       ],
       email: [
         { required: true, message: '请输入邮箱', trigger: 'blur' },
@@ -151,6 +152,12 @@ export default {
       ]
     }
     
+    // 生成随机昵称
+    const generateRandomNickname = () => {
+      const randomNum = Math.floor(Math.random() * 900000) + 100000 // 生成6位随机数
+      return `用户${randomNum}`
+    }
+    
     // 处理注册
     const handleRegister = async () => {
       if (!registerFormRef.value) return
@@ -162,11 +169,19 @@ export default {
         loading.value = true
         
         // 调用注册API
-        await registerUser({
-          nickname: registerForm.nickname,
+        const response = await registerUser({
+          username: registerForm.username,
+          nickname: generateRandomNickname(), // 自动生成随机昵称
           email: registerForm.email,
-          password: registerForm.password
+          password: registerForm.password,
+          confirmPassword: registerForm.confirmPassword
         })
+        
+        // 检查注册是否成功
+        if (!response.success) {
+          ElMessage.error(response.message || '注册失败，请重试')
+          return
+        }
         
         ElMessage.success('注册成功，请登录')
         
@@ -174,6 +189,7 @@ export default {
         router.push('/login')
         
       } catch (error) {
+        console.error('注册错误:', error)
         ElMessage.error(error.message || '注册失败，请重试')
       } finally {
         loading.value = false

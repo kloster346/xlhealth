@@ -34,7 +34,8 @@
         <el-dropdown v-else @command="handleCommand" class="user-dropdown">
           <span class="user-info">
             <el-avatar :size="32" class="user-avatar">
-              <el-icon><User /></el-icon>
+              <img v-if="userAvatarUrl" :src="userAvatarUrl" alt="头像" />
+              <el-icon v-else><User /></el-icon>
             </el-avatar>
             <span class="username">{{ user?.nickname || user?.email }}</span>
             <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
@@ -62,7 +63,8 @@ import { computed } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { logoutUser } from '../api/auth'
+import { logoutUser } from '../api/services'
+import { buildAvatarUrl } from '../utils/url'
 import {
   ChatDotRound,
   User,
@@ -88,6 +90,11 @@ export default {
     const isLoggedIn = computed(() => store.state.isLoggedIn)
     const user = computed(() => store.state.user)
     const activeIndex = computed(() => route.path)
+    
+    // 计算完整的头像URL
+    const userAvatarUrl = computed(() => {
+      return user.value?.avatarUrl ? buildAvatarUrl(user.value.avatarUrl) : ''
+    })
 
     // 处理菜单选择
     const handleSelect = (index) => {
@@ -137,6 +144,7 @@ export default {
       appName,
       isLoggedIn,
       user,
+      userAvatarUrl,
       activeIndex,
       handleSelect,
       handleLogin,

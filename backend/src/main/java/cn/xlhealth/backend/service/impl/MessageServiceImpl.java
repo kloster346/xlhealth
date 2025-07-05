@@ -58,23 +58,11 @@ public class MessageServiceImpl implements MessageService {
         // 验证用户是否有权限访问对话
         validateUserAccessToConversationMessages(conversationId, userId);
 
-        // 1. 首先保存用户消息到数据库
-        Message userMsg = new Message();
-        userMsg.setConversationId(conversationId);
-        userMsg.setUserId(userId);
-        userMsg.setRole(Message.MessageRole.USER);
-        userMsg.setContent(userMessage);
-        userMsg.setContentType(Message.ContentType.TEXT);
-        userMsg.setStatus(Message.MessageStatus.SUCCESS);
-        userMsg.setTokenCount(userMessage.length());
-        userMsg.setCreatedTime(LocalDateTime.now());
-        userMsg.setUpdatedTime(LocalDateTime.now());
-        userMsg.setDeleted(false);
+        // 注意：此方法不再保存用户消息，用户消息应该通过sendMessage方法单独保存
+        // 这样可以避免重复保存用户消息的问题
+        log.info("开始生成AI回复，用户消息内容: {}", userMessage);
 
-        messageMapper.insert(userMsg);
-        log.info("用户消息已保存: messageId={}", userMsg.getId());
-
-        // 2. 创建AI回复消息（初始状态为处理中）
+        // 1. 创建AI回复消息（初始状态为处理中）
         Message aiMessage = new Message();
         aiMessage.setConversationId(conversationId);
         aiMessage.setUserId(userId);
@@ -149,23 +137,11 @@ public class MessageServiceImpl implements MessageService {
         // 验证用户是否有权限访问对话
         validateUserAccessToConversationMessages(conversationId, userId);
 
-        // 1. 首先保存用户消息到数据库
-        Message userMsg = new Message();
-        userMsg.setConversationId(conversationId);
-        userMsg.setUserId(userId);
-        userMsg.setRole(Message.MessageRole.USER);
-        userMsg.setContent(request.getMessage());
-        userMsg.setContentType(Message.ContentType.TEXT);
-        userMsg.setStatus(Message.MessageStatus.SUCCESS);
-        userMsg.setTokenCount(request.getMessage().length());
-        userMsg.setCreatedTime(LocalDateTime.now());
-        userMsg.setUpdatedTime(LocalDateTime.now());
-        userMsg.setDeleted(false);
+        // 注意：此方法不再保存用户消息，用户消息应该通过sendMessage方法单独保存
+        // 这样可以避免重复保存用户消息的问题
+        log.info("开始生成AI回复，用户消息内容: {}", request.getMessage());
 
-        messageMapper.insert(userMsg);
-        log.info("用户消息已保存: messageId={}", userMsg.getId());
-
-        // 2. 创建AI回复消息（初始状态为处理中）
+        // 1. 创建AI回复消息（初始状态为处理中）
         Message aiMessage = new Message();
         aiMessage.setConversationId(conversationId);
         aiMessage.setUserId(userId);

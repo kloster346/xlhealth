@@ -1,246 +1,196 @@
-// 模拟API延迟
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+// 认证相关API接口
+import { authAPI } from './index'
 
-// 模拟用户数据库
-let users = [
-  {
-    id: 1,
-    email: 'admin@example.com',
-    password: 'Admin123',
-    nickname: '管理员',
-    avatar: '',
-    createdAt: '2024-01-01T00:00:00.000Z'
-  },
-  {
-    id: 2,
-    email: 'test@example.com',
-    password: 'Test123',
-    nickname: '测试用户',
-    avatar: '',
-    createdAt: '2024-01-01T00:00:00.000Z'
-  }
-]
-
-// 获取下一个用户ID
-const getNextUserId = () => {
-  return Math.max(...users.map(u => u.id), 0) + 1
-}
-
-// 用户登录
+/**
+ * 用户登录
+ * @param {Object} credentials - 登录凭据
+ * @param {string} credentials.usernameOrEmail - 用户名或邮箱
+ * @param {string} credentials.password - 密码
+ * @returns {Promise} 登录结果
+ */
 export const loginUser = async (credentials) => {
-  await delay(1000) // 模拟网络延迟
-  
-  const { email, password } = credentials
-  
-  // 查找用户
-  const user = users.find(u => u.email === email)
-  
-  if (!user) {
-    throw new Error('用户不存在')
-  }
-  
-  if (user.password !== password) {
-    throw new Error('密码错误')
-  }
-  
-  // 返回用户信息（不包含密码）
-  const { password: _password, ...userInfo } = user
-  
-  return {
-    success: true,
-    message: '登录成功',
-    user: userInfo,
-    token: `mock_token_${user.id}_${Date.now()}`
+  try {
+    const response = await authAPI.login(credentials)
+    
+    // 保存token到localStorage
+    if (response.accessToken) {
+      localStorage.setItem('token', response.accessToken)
+      localStorage.setItem('tokenType', response.tokenType || 'Bearer')
+      localStorage.setItem('expiresIn', response.expiresIn)
+      
+      // 保存用户信息
+      if (response.userInfo) {
+        localStorage.setItem('userInfo', JSON.stringify(response.userInfo))
+      }
+    }
+    
+    return {
+      success: true,
+      message: '登录成功',
+      data: response
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || '登录失败',
+      error: error
+    }
   }
 }
 
-// 用户注册
+/**
+ * 用户注册
+ * @param {Object} userData - 用户注册数据
+ * @param {string} userData.username - 用户名
+ * @param {string} userData.email - 邮箱
+ * @param {string} userData.password - 密码
+ * @param {string} userData.nickname - 昵称
+ * @returns {Promise} 注册结果
+ */
 export const registerUser = async (userData) => {
-  await delay(1000) // 模拟网络延迟
-  
-  const { email, password, nickname } = userData
-  
-  // 检查邮箱是否已存在
-  const existingUser = users.find(u => u.email === email)
-  if (existingUser) {
-    throw new Error('该邮箱已被注册')
-  }
-  
-  // 检查昵称是否已存在
-  const existingNickname = users.find(u => u.nickname === nickname)
-  if (existingNickname) {
-    throw new Error('该昵称已被使用')
-  }
-  
-  // 创建新用户
-  const newUser = {
-    id: getNextUserId(),
-    email,
-    password,
-    nickname,
-    avatar: '',
-    createdAt: new Date().toISOString()
-  }
-  
-  users.push(newUser)
-  
-  // 返回用户信息（不包含密码）
-  const { password: _password, ...userInfo } = newUser
-  
-  return {
-    success: true,
-    message: '注册成功',
-    user: userInfo
-  }
-}
-
-// 获取用户信息
-export const getUserInfo = async (userId) => {
-  await delay(500) // 模拟网络延迟
-  
-  const user = users.find(u => u.id === userId)
-  
-  if (!user) {
-    throw new Error('用户不存在')
-  }
-  
-  // 返回用户信息（不包含密码）
-  const { password: _password, ...userInfo } = user
-  
-  return {
-    success: true,
-    user: userInfo
-  }
-}
-
-// 更新用户信息
-export const updateUserInfo = async (userId, updateData) => {
-  await delay(800) // 模拟网络延迟
-  
-  const userIndex = users.findIndex(u => u.id === userId)
-  
-  if (userIndex === -1) {
-    throw new Error('用户不存在')
-  }
-  
-  // 如果更新邮箱，检查是否已存在
-  if (updateData.email && updateData.email !== users[userIndex].email) {
-    const existingUser = users.find(u => u.email === updateData.email)
-    if (existingUser) {
-      throw new Error('该邮箱已被使用')
+  try {
+    const response = await authAPI.register(userData)
+    
+    return {
+      success: true,
+      message: '注册成功',
+      data: response
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || '注册失败',
+      error: error
     }
   }
-  
-  // 如果更新昵称，检查是否已存在
-  if (updateData.nickname && updateData.nickname !== users[userIndex].nickname) {
-    const existingNickname = users.find(u => u.nickname === updateData.nickname)
-    if (existingNickname) {
-      throw new Error('该昵称已被使用')
+}
+
+/**
+ * 验证访问令牌
+ * @returns {Promise} 验证结果
+ */
+export const validateToken = async () => {
+  try {
+    const response = await authAPI.validate()
+    
+    return {
+      success: true,
+      valid: response === true,
+      data: response
+    }
+  } catch (error) {
+    return {
+      success: false,
+      valid: false,
+      message: error.message || '令牌验证失败',
+      error: error
     }
   }
-  
-  // 更新用户信息
-  users[userIndex] = {
-    ...users[userIndex],
-    ...updateData,
-    updatedAt: new Date().toISOString()
-  }
-  
-  // 返回更新后的用户信息（不包含密码）
-  const { password: _password, ...userInfo } = users[userIndex]
-  
-  return {
-    success: true,
-    message: '更新成功',
-    user: userInfo
+}
+
+/**
+ * 刷新访问令牌
+ * @returns {Promise} 刷新结果
+ */
+export const refreshToken = async () => {
+  try {
+    const response = await authAPI.refreshToken()
+    
+    // 更新token
+    if (response.accessToken) {
+      localStorage.setItem('token', response.accessToken)
+      localStorage.setItem('tokenType', response.tokenType || 'Bearer')
+      localStorage.setItem('expiresIn', response.expiresIn)
+      
+      // 更新用户信息
+      if (response.userInfo) {
+        localStorage.setItem('userInfo', JSON.stringify(response.userInfo))
+      }
+    }
+    
+    return {
+      success: true,
+      message: '令牌刷新成功',
+      data: response
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || '令牌刷新失败',
+      error: error
+    }
   }
 }
 
-// 修改密码
-export const changePassword = async (userId, passwordData) => {
-  await delay(800) // 模拟网络延迟
-  
-  const { oldPassword, newPassword } = passwordData
-  const userIndex = users.findIndex(u => u.id === userId)
-  
-  if (userIndex === -1) {
-    throw new Error('用户不存在')
-  }
-  
-  if (users[userIndex].password !== oldPassword) {
-    throw new Error('原密码错误')
-  }
-  
-  // 更新密码
-  users[userIndex].password = newPassword
-  users[userIndex].updatedAt = new Date().toISOString()
-  
-  return {
-    success: true,
-    message: '密码修改成功'
-  }
-}
-
-// 检查邮箱是否可用
-export const checkEmailAvailable = async (email) => {
-  await delay(300) // 模拟网络延迟
-  
-  const existingUser = users.find(u => u.email === email)
-  
-  return {
-    success: true,
-    available: !existingUser
-  }
-}
-
-// 检查昵称是否可用
-export const checkNicknameAvailable = async (nickname) => {
-  await delay(300) // 模拟网络延迟
-  
-  const existingUser = users.find(u => u.nickname === nickname)
-  
-  return {
-    success: true,
-    available: !existingUser
-  }
-}
-
-// 退出登录（清除服务端session等）
+/**
+ * 用户登出
+ * @returns {Promise} 登出结果
+ */
 export const logoutUser = async () => {
-  await delay(300) // 模拟网络延迟
-  
-  return {
-    success: true,
-    message: '退出登录成功'
+  try {
+    await authAPI.logout()
+    
+    // 清除本地存储的认证信息
+    localStorage.removeItem('token')
+    localStorage.removeItem('tokenType')
+    localStorage.removeItem('expiresIn')
+    localStorage.removeItem('userInfo')
+    
+    return {
+      success: true,
+      message: '登出成功'
+    }
+  } catch (error) {
+    // 即使后端登出失败，也要清除本地存储
+    localStorage.removeItem('token')
+    localStorage.removeItem('tokenType')
+    localStorage.removeItem('expiresIn')
+    localStorage.removeItem('userInfo')
+    
+    return {
+      success: true,
+      message: '登出成功'
+    }
   }
 }
 
-// 验证token有效性
-export const validateToken = async (token) => {
-  await delay(300) // 模拟网络延迟
-  
-  // 简单的token验证逻辑
-  if (!token || !token.startsWith('mock_token_')) {
-    throw new Error('无效的token')
+/**
+ * 获取当前用户信息（从localStorage）
+ * @returns {Object|null} 用户信息
+ */
+export const getCurrentUser = () => {
+  try {
+    const userInfo = localStorage.getItem('userInfo')
+    return userInfo ? JSON.parse(userInfo) : null
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+    return null
   }
-  
-  const parts = token.split('_')
-  if (parts.length !== 4) {
-    throw new Error('无效的token格式')
-  }
-  
-  const userId = parseInt(parts[2])
-  const user = users.find(u => u.id === userId)
-  
-  if (!user) {
-    throw new Error('用户不存在')
-  }
-  
-  // 返回用户信息（不包含密码）
-  const { password: _, ...userInfo } = user
-  
-  return {
-    success: true,
-    user: userInfo
-  }
+}
+
+/**
+ * 检查是否已登录
+ * @returns {boolean} 是否已登录
+ */
+export const isLoggedIn = () => {
+  const token = localStorage.getItem('token')
+  return !!token
+}
+
+/**
+ * 获取访问令牌
+ * @returns {string|null} 访问令牌
+ */
+export const getAccessToken = () => {
+  return localStorage.getItem('token')
+}
+
+/**
+ * 清除认证信息
+ */
+export const clearAuthData = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('tokenType')
+  localStorage.removeItem('expiresIn')
+  localStorage.removeItem('userInfo')
 }

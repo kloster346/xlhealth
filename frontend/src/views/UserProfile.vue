@@ -17,17 +17,23 @@
         
         <div class="user-info" v-if="user">
           <div class="user-avatar">
-            <el-avatar :size="80">
-              <img v-if="user.avatar" :src="user.avatar" alt="头像" />
+            <el-avatar :size="80" class="avatar-container" @click="showAvatarPreview">
+              <img v-if="userAvatarUrl" :src="userAvatarUrl" alt="头像" />
               <el-icon v-else><User /></el-icon>
             </el-avatar>
+            <div class="avatar-overlay" @click="showAvatarPreview">
+              <el-icon><ZoomIn /></el-icon>
+            </div>
           </div>
           
           <div class="user-details">
             <h3>{{ user?.nickname }}</h3>
+            <p class="user-username">用户名: {{ user?.username }}</p>
             <p class="user-email">{{ user?.email }}</p>
             <p class="user-id">用户ID: {{ user?.id }}</p>
-            <p class="user-date">注册时间: {{ formatDate(user?.createdAt) }}</p>
+            <p class="user-status">账户状态: {{ getStatusText(user?.status) }}</p>
+            <p class="user-date">注册时间: {{ formatDate(user?.createdTime) }}</p>
+            <p class="user-last-login" v-if="user?.lastLoginTime">最后登录: {{ formatDate(user?.lastLoginTime) }}</p>
           </div>
         </div>
         
@@ -65,7 +71,7 @@
             返回
           </el-button>
         </div>
-        <UserProfileEdit @save="handleSave" @cancel="cancelEdit" />
+        <UserProfileEdit @save="handleSave" @cancel="cancelEdit" @profile-updated="handleProfileUpdated" />
       </div>
       
       <!-- 历史记录管理 -->
@@ -182,6 +188,29 @@
         </div>
       </el-card>
     </div>
+    
+    <!-- 头像预览弹窗 -->
+    <el-dialog
+      v-model="avatarPreviewVisible"
+      title="头像预览"
+      width="500px"
+      center
+      :show-close="true"
+    >
+      <div class="avatar-preview-content">
+        <img v-if="userAvatarUrl" :src="userAvatarUrl" alt="头像预览" class="preview-image" />
+        <div v-else class="no-avatar">
+          <el-icon class="no-avatar-icon"><User /></el-icon>
+          <p>暂无头像</p>
+        </div>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+           <el-button @click="avatarPreviewVisible = false">关闭</el-button>
+           <el-button type="primary" @click="editAvatar">编辑头像</el-button>
+         </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -191,9 +220,11 @@
   import { useStore } from 'vuex'
   import { useRouter } from 'vue-router'
   import { ElMessage, ElMessageBox } from 'element-plus'
-  import { User, ChatDotRound } from '@element-plus/icons-vue'
+  import { User, ChatDotRound, ZoomIn, ArrowLeft } from '@element-plus/icons-vue'
   import UserProfileEdit from '@/components/UserProfileEdit.vue'
   import { chatService } from '@/api/chat'
+  import { getCurrentUserInfo } from '@/api/services'
+  import { buildAvatarUrl } from '@/utils/url'
 
 const router = useRouter()
 const store = useStore()
@@ -206,8 +237,15 @@ const conversationStats = ref({
   totalMessages: 0,
   lastActiveTime: null
 })
+const avatarPreviewVisible = ref(false)
+
 
 const user = computed(() => store.state.user)
+
+// 计算完整的头像URL
+const userAvatarUrl = computed(() => {
+  return user.value?.avatarUrl ? buildAvatarUrl(user.value.avatarUrl) : ''
+})
 
 const formatDate = (dateString) => {
   if (!dateString) return '未知'
@@ -219,10 +257,58 @@ const formatDate = (dateString) => {
   })
 }
 
+const getStatusText = (status) => {
+  const statusMap = {
+    'ACTIVE': '正常',
+    'INACTIVE': '未激活',
+    'SUSPENDED': '已暂停',
+    'BANNED': '已封禁'
+  }
+  return statusMap[status] || '未知'
+}
+
+// 加载用户资料
+const loadUserProfile = async () => {
+  try {
+    const response = await getCurrentUserInfo()
+    if (response && response.success && response.user) {
+      // 更新store中的用户信息
+      store.commit('SET_USER', response.user)
+    } else if (response && response.data) {
+      // 兼容不同的响应格式
+      store.commit('SET_USER', response.data)
+    } else {
+      console.warn('获取用户资料响应格式不正确:', response)
+    }
+  } catch (error) {
+    console.error('获取用户资料失败:', error)
+    ElMessage.error('获取用户资料失败')
+  }
+}
+
 // 加载对话数据和统计信息
 const loadConversations = async () => {
   try {
-    const data = await chatService.getConversations()
+    const response = await chatService.getConversations()
+    
+    // 确保数据是数组格式
+    let data = []
+    if (response && response.success) {
+      // 优先使用conversations字段
+      if (Array.isArray(response.conversations)) {
+        data = response.conversations
+      } else if (Array.isArray(response.data)) {
+        data = response.data
+      }
+    } else if (Array.isArray(response)) {
+      data = response
+    } else if (response && Array.isArray(response.data)) {
+      data = response.data
+    } else {
+      console.warn('API返回的对话数据格式不正确:', response)
+      data = []
+    }
+    
     conversations.value = data
     
     // 计算统计信息
@@ -240,6 +326,13 @@ const loadConversations = async () => {
     }
   } catch (error) {
     console.error('加载对话数据失败:', error)
+    // 确保即使出错也设置为空数组
+    conversations.value = []
+    conversationStats.value = {
+      totalConversations: 0,
+      totalMessages: 0,
+      lastActiveTime: null
+    }
     ElMessage.error('加载对话数据失败')
   }
 }
@@ -255,6 +348,11 @@ const cancelEdit = () => {
 const handleSave = () => {
   isEditing.value = false
   ElMessage.success('保存成功')
+}
+
+const handleProfileUpdated = async () => {
+  await loadUserProfile()
+  ElMessage.success('个人资料已更新')
 }
 
 const handleLogout = async () => {
@@ -373,8 +471,20 @@ const handleNotificationChange = (value) => {
   ElMessage.info(`消息通知已${value ? '开启' : '关闭'}`)
 }
 
+const showAvatarPreview = () => {
+   avatarPreviewVisible.value = true
+ }
+ 
+ const editAvatar = () => {
+   avatarPreviewVisible.value = false
+   startEdit()
+ }
+
+
+
 onMounted(() => {
-  // 加载对话数据
+  // 加载用户资料和对话数据
+  loadUserProfile()
   loadConversations()
 })
 </script>
@@ -430,6 +540,72 @@ onMounted(() => {
 
 .user-avatar {
   flex-shrink: 0;
+  position: relative;
+  display: inline-block;
+}
+
+.avatar-container {
+  border: 3px solid #409eff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.avatar-container:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+  border-radius: 50%;
+  color: white;
+  font-size: 24px;
+}
+
+.user-avatar:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.avatar-preview-content {
+  text-align: center;
+  padding: 20px;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.no-avatar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #909399;
+}
+
+.no-avatar-icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.dialog-footer {
+  text-align: center;
 }
 
 .user-details h3 {
@@ -448,9 +624,16 @@ onMounted(() => {
   font-weight: 500;
 }
 
+.user-username,
 .user-id,
-.user-date {
+.user-status,
+.user-date,
+.user-last-login {
   font-size: 14px;
+}
+
+.user-status {
+  font-weight: 500;
 }
 
 /* 对话统计信息样式 */

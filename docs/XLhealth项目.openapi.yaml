@@ -1,0 +1,2942 @@
+openapi: 3.0.1
+info:
+  title: XLhealth项目
+  description: ''
+  version: 1.0.0
+tags:
+  - name: 用户认证
+  - name: 用户管理
+  - name: 对话管理
+  - name: 消息管理
+  - name: 系统健康检查
+  - name: AI功能测试
+  - name: AI服务监控
+paths:
+  /api/v1/auth/validate:
+    get:
+      summary: 验证访问令牌
+      deprecated: false
+      description: 🔄 验证当前访问令牌的有效性
+      tags:
+        - 用户认证
+        - 用户认证
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 验证完成
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: boolean
+                        description: 令牌是否有效
+              examples:
+                '1':
+                  summary: 令牌有效
+                  value:
+                    code: 0
+                    message: 令牌有效
+                    data: true
+                '2':
+                  summary: 令牌无效
+                  value:
+                    code: 0
+                    message: 令牌无效
+                    data: false
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+      security: []
+  /api/v1/auth/register:
+    post:
+      summary: 用户注册
+      deprecated: false
+      description: 新用户注册账号
+      tags:
+        - 用户认证
+        - 用户认证
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+                - nickname
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  pattern: ^[a-zA-Z0-9_]+$
+                  description: 用户名，只能包含字母、数字和下划线
+                  examples:
+                    - user001
+                email:
+                  type: string
+                  format: email
+                  maxLength: 100
+                  description: 邮箱地址
+                  examples:
+                    - user@example.com
+                password:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+                  description: 🔐 密码，至少8位
+                  examples:
+                    - password123
+                nickname:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                  description: 用户昵称
+                  examples:
+                    - 小明
+            examples:
+              normal:
+                value:
+                  username: testuser4
+                  email: test4@example.com
+                  password: Test123456
+                  confirmPassword: Test123456
+                  nickname: 测试用户4
+                summary: 正常注册
+      responses:
+        '201':
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 0
+                message: 注册成功
+                data:
+                  userId: 1001
+                  username: user001
+                  email: user@example.com
+                  nickname: 小明
+                  createdAt: '2024-01-01T10:00:00Z'
+          headers: {}
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10001
+                message: 请求参数错误
+                details: username字段不能为空
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/users
+          headers: {}
+        '409':
+          description: 资源冲突
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10005
+                message: 资源冲突
+                details: 用户名已存在
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/auth/register
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+      security: []
+  /api/v1/auth/login:
+    post:
+      summary: 用户登录
+      deprecated: false
+      description: 🔐 用户登录获取访问令牌
+      tags:
+        - 用户认证
+        - 用户认证
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - usernameOrEmail
+                - password
+              properties:
+                usernameOrEmail:
+                  type: string
+                  description: 用户名或邮箱
+                  examples:
+                    - user001
+                password:
+                  type: string
+                  description: 🔐 密码
+                  examples:
+                    - password123
+            example:
+              usernameOrEmail: testuser4
+              password: Test123456
+              rememberMe: false
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 0
+                message: 登录成功
+                data:
+                  accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  tokenType: Bearer
+                  expiresIn: 86400
+                  userInfo:
+                    id: 1001
+                    username: user001
+                    email: user@example.com
+                    nickname: 小明
+                    avatarUrl: /avatars/user001.jpg
+                    status: ACTIVE
+          headers: {}
+        '401':
+          description: 未授权访问
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                '2':
+                  summary: 缺少访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 请提供有效的访问令牌
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+                '3':
+                  summary: 无效访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 访问令牌已过期或无效
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+      security: []
+  /api/v1/auth/logout:
+    post:
+      summary: 用户登出
+      deprecated: false
+      description: 🔐 用户登出，使当前令牌失效
+      tags:
+        - 用户认证
+        - 用户认证
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 登出成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 0
+                message: 登出成功
+                data: null
+          headers: {}
+        '401':
+          description: 未授权访问
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                '2':
+                  summary: 缺少访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 请提供有效的访问令牌
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+                '3':
+                  summary: 无效访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 访问令牌已过期或无效
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+      security: []
+  /api/v1/auth/refresh:
+    post:
+      summary: 刷新访问令牌
+      deprecated: false
+      description: 🔐 使用当前令牌刷新获取新的访问令牌
+      tags:
+        - 用户认证
+        - 用户认证
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 刷新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 0
+                message: 刷新成功
+                data:
+                  accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  tokenType: Bearer
+                  expiresIn: 86400
+                  userInfo:
+                    id: 1001
+                    username: user001
+                    email: user@example.com
+                    nickname: 小明
+                    avatarUrl: /avatars/user001.jpg
+                    status: ACTIVE
+          headers: {}
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10001
+                message: 请求参数错误
+                details: username字段不能为空
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/users
+          headers: {}
+        '401':
+          description: 未授权访问
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                '3':
+                  summary: 缺少访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 请提供有效的访问令牌
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+                '4':
+                  summary: 无效访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 访问令牌已过期或无效
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+      security: []
+  /api/v1/users/avatar:
+    post:
+      summary: 上传头像
+      deprecated: false
+      description: ''
+      tags:
+        - 用户管理
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  example: file://D:\用户user\图片\证件照（白底）.jpg
+                  type: string
+                  format: binary
+            examples: {}
+      responses:
+        '500':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  timestamp:
+                    type: string
+                required:
+                  - code
+                  - message
+                  - timestamp
+          headers: {}
+      security: []
+  /api/v1/users/profile:
+    get:
+      summary: 获取当前用户信息
+      deprecated: false
+      description: 🔄 获取当前登录用户的详细信息
+      tags:
+        - 用户管理
+        - 用户管理
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 0
+                message: 获取成功
+                data:
+                  id: 1001
+                  username: user001
+                  email: user@example.com
+                  nickname: 小明
+                  avatarUrl: /avatars/user001.jpg
+                  status: ACTIVE
+                  createdTime: '2024-01-01T10:00:00Z'
+                  lastLoginTime: '2024-01-01T15:30:00Z'
+          headers: {}
+        '401':
+          description: 未授权访问
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                '2':
+                  summary: 缺少访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 请提供有效的访问令牌
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+                '3':
+                  summary: 无效访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 访问令牌已过期或无效
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+      security: []
+    put:
+      summary: 更新用户信息
+      deprecated: false
+      description: 🔐 更新当前用户的个人信息
+      tags:
+        - 用户管理
+        - 用户管理
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nickname:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                  description: 用户昵称
+                  examples:
+                    - 新昵称
+                avatarUrl:
+                  type: string
+                  maxLength: 500
+                  description: 头像URL
+                  examples:
+                    - /avatars/new-avatar.jpg
+                email:
+                  type: string
+                  format: email
+                  maxLength: 100
+                  description: 邮箱地址
+                  examples:
+                    - newemail@example.com
+            example:
+              email: testuser@example.com
+              nickname: 测试更新用户信息
+              avatarUrl: http://example.com/new-avatar.jpg
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 0
+                message: 更新成功
+                data:
+                  id: 1001
+                  username: user001
+                  email: newemail@example.com
+                  nickname: 新昵称
+                  avatarUrl: /avatars/new-avatar.jpg
+                  updatedAt: '2024-01-01T16:00:00Z'
+          headers: {}
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10001
+                message: 请求参数错误
+                details: username字段不能为空
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/users
+          headers: {}
+        '401':
+          description: 未授权访问
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                '3':
+                  summary: 缺少访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 请提供有效的访问令牌
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+                '4':
+                  summary: 无效访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 访问令牌已过期或无效
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+          headers: {}
+        '409':
+          description: 资源冲突
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10005
+                message: 资源冲突
+                details: 用户名已存在
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/auth/register
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+      security: []
+  /api/v1/users/password:
+    put:
+      summary: 修改当前用户密码
+      deprecated: false
+      description: 🔐 修改当前登录用户的密码
+      tags:
+        - 用户管理
+        - 用户管理
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - oldPassword
+                - newPassword
+              properties:
+                oldPassword:
+                  type: string
+                  description: 🔐 当前密码
+                  examples:
+                    - oldpassword123
+                newPassword:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+                  description: 🔐 新密码，至少8位
+                  examples:
+                    - newpassword123
+            example:
+              currentPassword: NewPassword123
+              newPassword: Test123456
+              confirmPassword: Test123456
+      responses:
+        '200':
+          description: 密码修改成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          headers: {}
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10001
+                message: 请求参数错误
+                details: username字段不能为空
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/users
+          headers: {}
+        '401':
+          description: 未授权访问
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                '2':
+                  summary: 缺少访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 请提供有效的访问令牌
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+                '3':
+                  summary: 无效访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 访问令牌已过期或无效
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+      security: []
+  /api/v1/conversations/{conversationId}/archive:
+    put:
+      summary: 归档对话
+      deprecated: false
+      description: ''
+      tags:
+        - 对话管理
+      parameters:
+        - name: conversationId
+          in: path
+          description: ''
+          required: true
+          example: '2'
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+          headers: {}
+      security: []
+  /api/v1/conversations/{conversationId}/activate:
+    put:
+      summary: 激活对话
+      deprecated: false
+      description: ''
+      tags:
+        - 对话管理
+      parameters:
+        - name: conversationId
+          in: path
+          description: ''
+          required: true
+          example: '2'
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  code:
+                    type: string
+                  message:
+                    type: string
+                  timestamp:
+                    type: string
+                required:
+                  - success
+                  - code
+                  - message
+                  - timestamp
+          headers: {}
+      security: []
+  /api/v1/conversations/stats:
+    get:
+      summary: 获取对话统计
+      deprecated: false
+      description: ''
+      tags:
+        - 对话管理
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  code:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      active:
+                        type: integer
+                      archived:
+                        type: integer
+                    required:
+                      - total
+                      - active
+                      - archived
+                  timestamp:
+                    type: string
+                required:
+                  - success
+                  - code
+                  - message
+                  - data
+                  - timestamp
+          headers: {}
+      security: []
+  /api/v1/conversations/status/{status}:
+    get:
+      summary: 按状态获取对话列表
+      deprecated: false
+      description: ''
+      tags:
+        - 对话管理
+      parameters:
+        - name: status
+          in: path
+          description: ''
+          required: true
+          example: ACTIVE
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  code:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        userId:
+                          type: integer
+                        title:
+                          type: string
+                        status:
+                          type: string
+                        messageCount:
+                          type: integer
+                        totalTokens:
+                          type: integer
+                        startTime:
+                          type: string
+                        createdTime:
+                          type: string
+                        updatedTime:
+                          type: string
+                  timestamp:
+                    type: string
+                required:
+                  - success
+                  - code
+                  - message
+                  - data
+                  - timestamp
+          headers: {}
+      security: []
+  /api/v1/conversations:
+    get:
+      summary: 获取对话列表
+      deprecated: false
+      description: 🔄 获取当前用户的对话列表（支持分页）
+      tags:
+        - 对话管理
+        - 对话管理
+      parameters:
+        - name: current
+          in: query
+          description: 页码，从1开始
+          required: false
+          example: 1
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: 每页数量
+          required: false
+          example: 10
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: 对话状态筛选
+          required: false
+          schema:
+            type: string
+            enum:
+              - ACTIVE
+              - ARCHIVED
+              - DELETED
+        - name: sort
+          in: query
+          description: 排序方式
+          required: false
+          schema:
+            type: string
+            default: lastMessageAt,desc
+            examples:
+              - createdAt,desc
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          content:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Conversation'
+                          pagination:
+                            $ref: '#/components/schemas/Pagination'
+              example:
+                code: 0
+                message: 获取成功
+                data:
+                  content:
+                    - id: 2001
+                      title: 关于焦虑的咨询
+                      status: ACTIVE
+                      createdAt: '2024-01-01T10:00:00Z'
+                      lastMessageAt: '2024-01-01T15:30:00Z'
+                      messageCount: 12
+                    - id: 2002
+                      title: 睡眠问题讨论
+                      status: ACTIVE
+                      createdAt: '2024-01-01T09:00:00Z'
+                      lastMessageAt: '2024-01-01T14:20:00Z'
+                      messageCount: 8
+                  pagination:
+                    page: 1
+                    size: 20
+                    total: 2
+                    totalPages: 1
+          headers: {}
+        '401':
+          description: 未授权访问
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                '2':
+                  summary: 缺少访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 请提供有效的访问令牌
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+                '3':
+                  summary: 无效访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 访问令牌已过期或无效
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+      security: []
+    post:
+      summary: 创建新对话
+      deprecated: false
+      description: 创建一个新的AI对话会话
+      tags:
+        - 对话管理
+        - 对话管理
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                  description: 对话标题，必填
+                  examples:
+                    - 新的心理咨询
+                metadata:
+                  type: object
+                  description: 对话元数据，可选
+                  examples:
+                    - tags:
+                        - anxiety
+                        - stress
+                      priority: normal
+                  properties: {}
+            example:
+              title: 第1次AI对话测试
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 0
+                message: 对话创建成功
+                data:
+                  id: 2003
+                  title: 新的心理咨询
+                  status: ACTIVE
+                  createdAt: '2024-01-01T16:00:00Z'
+                  messageCount: 0
+          headers: {}
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10001
+                message: 请求参数错误
+                details: username字段不能为空
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/users
+          headers: {}
+        '401':
+          description: 未授权访问
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                '3':
+                  summary: 缺少访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 请提供有效的访问令牌
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+                '4':
+                  summary: 无效访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 访问令牌已过期或无效
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+      security: []
+  /api/v1/conversations/{conversationId}:
+    get:
+      summary: 获取对话详情
+      deprecated: false
+      description: 🔄 获取指定对话的详细信息
+      tags:
+        - 对话管理
+        - 对话管理
+      parameters:
+        - name: conversationId
+          in: path
+          description: 对话ID
+          required: true
+          example: 8
+          schema:
+            type: integer
+            format: int64
+            examples:
+              - 2001
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 0
+                message: 获取成功
+                data:
+                  id: 2001
+                  title: 关于焦虑的咨询
+                  status: ACTIVE
+                  metadata:
+                    tags:
+                      - anxiety
+                  createdAt: '2024-01-01T10:00:00Z'
+                  updatedAt: '2024-01-01T15:30:00Z'
+                  lastMessageAt: '2024-01-01T15:30:00Z'
+                  messageCount: 12
+          headers: {}
+        '401':
+          description: 未授权访问
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                '2':
+                  summary: 缺少访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 请提供有效的访问令牌
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+                '3':
+                  summary: 无效访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 访问令牌已过期或无效
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+          headers: {}
+        '403':
+          description: 权限不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10003
+                message: 权限不足
+                details: 您没有访问此资源的权限
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations/2001
+          headers: {}
+        '404':
+          description: 资源不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10004
+                message: 资源不存在
+                details: 指定的对话不存在
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations/9999
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+      security: []
+    put:
+      summary: 更新对话信息
+      deprecated: false
+      description: 更新对话标题或状态
+      tags:
+        - 对话管理
+        - 对话管理
+      parameters:
+        - name: conversationId
+          in: path
+          description: 对话ID
+          required: true
+          example: 2
+          schema:
+            type: integer
+            format: int64
+            examples:
+              - 2001
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                  description: 对话标题
+                  examples:
+                    - 更新后的标题
+                status:
+                  type: string
+                  enum:
+                    - ACTIVE
+                    - ARCHIVED
+                    - DELETED
+                  description: 对话状态
+                  examples:
+                    - ARCHIVED
+                metadata:
+                  type: object
+                  description: 对话元数据
+                  examples:
+                    - tags:
+                        - anxiety
+                        - resolved
+                  properties: {}
+            example:
+              title: 第2次对话1次更新
+              status: ACTIVE
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 0
+                message: 更新成功
+                data:
+                  id: 2001
+                  title: 更新后的标题
+                  status: ARCHIVED
+                  updatedAt: '2024-01-01T16:30:00Z'
+          headers: {}
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10001
+                message: 请求参数错误
+                details: username字段不能为空
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/users
+          headers: {}
+        '401':
+          description: 未授权访问
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                '3':
+                  summary: 缺少访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 请提供有效的访问令牌
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+                '4':
+                  summary: 无效访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 访问令牌已过期或无效
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+          headers: {}
+        '403':
+          description: 权限不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10003
+                message: 权限不足
+                details: 您没有访问此资源的权限
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations/2001
+          headers: {}
+        '404':
+          description: 资源不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10004
+                message: 资源不存在
+                details: 指定的对话不存在
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations/9999
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+      security: []
+    delete:
+      summary: 删除对话
+      deprecated: false
+      description: 🔐 删除指定对话（软删除）
+      tags:
+        - 对话管理
+        - 对话管理
+      parameters:
+        - name: conversationId
+          in: path
+          description: 对话ID
+          required: true
+          example: 6
+          schema:
+            type: integer
+            format: int64
+            examples:
+              - 2001
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 0
+                message: 对话删除成功
+                data: null
+          headers: {}
+        '401':
+          description: 未授权访问
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                '2':
+                  summary: 缺少访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 请提供有效的访问令牌
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+                '3':
+                  summary: 无效访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 访问令牌已过期或无效
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+          headers: {}
+        '403':
+          description: 权限不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10003
+                message: 权限不足
+                details: 您没有访问此资源的权限
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations/2001
+          headers: {}
+        '404':
+          description: 资源不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10004
+                message: 资源不存在
+                details: 指定的对话不存在
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations/9999
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+      security: []
+  /api/v1/conversations/{conversationId}/messages/{messageId}:
+    get:
+      summary: 获取消息详情
+      deprecated: false
+      description: ''
+      tags:
+        - 消息管理
+      parameters:
+        - name: conversationId
+          in: path
+          description: ''
+          required: true
+          example: '7'
+          schema:
+            type: string
+        - name: messageId
+          in: path
+          description: ''
+          required: true
+          example: '8'
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      conversationId:
+                        type: integer
+                      userId:
+                        type: integer
+                      role:
+                        type: string
+                      content:
+                        type: string
+                      contentType:
+                        type: string
+                      status:
+                        type: string
+                      tokenCount:
+                        type: integer
+                      promptTokens:
+                        type: integer
+                      completionTokens:
+                        type: integer
+                      totalTokens:
+                        type: integer
+                      responseTime:
+                        type: integer
+                      metadata:
+                        type: string
+                      createdTime:
+                        type: string
+                      updatedTime:
+                        type: string
+                      deleted:
+                        type: boolean
+                    required:
+                      - id
+                      - conversationId
+                      - userId
+                      - role
+                      - content
+                      - contentType
+                      - status
+                      - tokenCount
+                      - promptTokens
+                      - completionTokens
+                      - totalTokens
+                      - responseTime
+                      - metadata
+                      - createdTime
+                      - updatedTime
+                      - deleted
+                  timestamp:
+                    type: string
+                required:
+                  - success
+                  - code
+                  - message
+                  - data
+                  - timestamp
+          headers: {}
+      security: []
+    delete:
+      summary: 删除消息
+      deprecated: false
+      description: ''
+      tags:
+        - 消息管理
+      parameters:
+        - name: conversationId
+          in: path
+          description: ''
+          required: true
+          example: '7'
+          schema:
+            type: string
+        - name: messageId
+          in: path
+          description: ''
+          required: true
+          example: '9'
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: boolean
+                  timestamp:
+                    type: string
+                required:
+                  - success
+                  - code
+                  - message
+                  - data
+                  - timestamp
+          headers: {}
+      security: []
+  /api/v1/conversations/{conversationId}/messages/batch:
+    delete:
+      summary: 批量删除消息
+      deprecated: false
+      description: ''
+      tags:
+        - 消息管理
+      parameters:
+        - name: conversationId
+          in: path
+          description: ''
+          required: true
+          example: '7'
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+            example:
+              messageIds:
+                - 12
+                - 13
+      responses:
+        '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  timestamp:
+                    type: string
+                required:
+                  - success
+                  - code
+                  - message
+                  - timestamp
+          headers: {}
+      security: []
+  /api/v1/conversations/{conversationId}/messages/count:
+    get:
+      summary: 统计对话消息数量
+      deprecated: false
+      description: ''
+      tags:
+        - 消息管理
+      parameters:
+        - name: conversationId
+          in: path
+          description: ''
+          required: true
+          example: '7'
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: integer
+                  timestamp:
+                    type: string
+                required:
+                  - success
+                  - code
+                  - message
+                  - data
+                  - timestamp
+          headers: {}
+      security: []
+  /api/v1/conversations/{conversationId}/messages/last:
+    get:
+      summary: 获取对话最后一条消息
+      deprecated: false
+      description: ''
+      tags:
+        - 消息管理
+      parameters:
+        - name: conversationId
+          in: path
+          description: ''
+          required: true
+          example: '7'
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      conversationId:
+                        type: integer
+                      userId:
+                        type: integer
+                      role:
+                        type: string
+                      content:
+                        type: string
+                      contentType:
+                        type: string
+                      status:
+                        type: string
+                      tokenCount:
+                        type: integer
+                      promptTokens:
+                        type: integer
+                      completionTokens:
+                        type: integer
+                      totalTokens:
+                        type: integer
+                      responseTime:
+                        type: integer
+                      metadata:
+                        type: string
+                      createdTime:
+                        type: string
+                      updatedTime:
+                        type: string
+                      deleted:
+                        type: boolean
+                    required:
+                      - id
+                      - conversationId
+                      - userId
+                      - role
+                      - content
+                      - contentType
+                      - status
+                      - tokenCount
+                      - promptTokens
+                      - completionTokens
+                      - totalTokens
+                      - responseTime
+                      - metadata
+                      - createdTime
+                      - updatedTime
+                      - deleted
+                  timestamp:
+                    type: string
+                required:
+                  - success
+                  - code
+                  - message
+                  - data
+                  - timestamp
+          headers: {}
+      security: []
+  /api/v1/conversations/{conversationId}/messages/clear:
+    delete:
+      summary: 清空对话所有消息
+      deprecated: false
+      description: ''
+      tags:
+        - 消息管理
+      parameters:
+        - name: conversationId
+          in: path
+          description: ''
+          required: true
+          example: '7'
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: boolean
+                  timestamp:
+                    type: string
+                required:
+                  - success
+                  - code
+                  - message
+                  - data
+                  - timestamp
+          headers: {}
+      security: []
+  /api/v1/conversations/{conversationId}/messages/ai-reply:
+    post:
+      summary: 生成AI回复
+      deprecated: false
+      description: ''
+      tags:
+        - 消息管理
+      parameters:
+        - name: conversationId
+          in: path
+          description: ''
+          required: true
+          example: '8'
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+            example:
+              message: 你还记得我的名字和职业吗？
+              emotionalState: 期待
+              context:
+                includeHistory: true
+                historyLimit: 10
+                includeUserProfile: true
+                summary: 用户之前提到过工作压力问题
+              preferences:
+                preferredType: EMOTIONAL_SUPPORT
+                length: MEDIUM
+                tone: WARM
+                includeAdvice: true
+                includeQuestions: true
+              parameters:
+                maxTokens: 500
+                temperature: 0.7
+                customParam: value
+      responses:
+        '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  timestamp:
+                    type: string
+                required:
+                  - success
+                  - code
+                  - message
+                  - timestamp
+          headers: {}
+      security: []
+  /api/v1/conversations/{conversationId}/messages/statistics:
+    get:
+      summary: 获取用户消息统计
+      deprecated: false
+      description: ''
+      tags:
+        - 消息管理
+      parameters:
+        - name: conversationId
+          in: path
+          description: ''
+          required: true
+          example: '7'
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      totalMessages:
+                        type: integer
+                      userMessages:
+                        type: integer
+                      assistantMessages:
+                        type: integer
+                      totalTokens:
+                        type: integer
+                    required:
+                      - totalMessages
+                      - userMessages
+                      - assistantMessages
+                      - totalTokens
+                  timestamp:
+                    type: string
+                required:
+                  - success
+                  - code
+                  - message
+                  - data
+                  - timestamp
+          headers: {}
+      security: []
+  /api/v1/conversations/{conversationId}/messages/{messageId}/status:
+    put:
+      summary: 更新消息状态
+      deprecated: false
+      description: ''
+      tags:
+        - 消息管理
+      parameters:
+        - name: conversationId
+          in: path
+          description: ''
+          required: true
+          example: '7'
+          schema:
+            type: string
+        - name: messageId
+          in: path
+          description: ''
+          required: true
+          example: '14'
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+            example:
+              status: PROCESSING
+      responses:
+        '500':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  timestamp:
+                    type: string
+                required:
+                  - success
+                  - code
+                  - message
+                  - timestamp
+          headers: {}
+      security: []
+  /api/v1/conversations/{conversationId}/messages:
+    get:
+      summary: 获取对话消息
+      deprecated: false
+      description: 🔄 获取指定对话的消息列表（支持分页）
+      tags:
+        - 消息管理
+        - 消息管理
+      parameters:
+        - name: conversationId
+          in: path
+          description: 对话ID
+          required: true
+          example: 8
+          schema:
+            type: integer
+            format: int64
+            examples:
+              - 2001
+        - name: current
+          in: query
+          description: 页码，从1开始
+          required: false
+          example: 1
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: 每页数量
+          required: false
+          example: 10
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: messageType
+          in: query
+          description: 消息类型筛选
+          required: false
+          schema:
+            type: string
+            enum:
+              - USER
+              - AI
+              - SYSTEM
+        - name: sort
+          in: query
+          description: 排序方式
+          required: false
+          schema:
+            type: string
+            default: createdAt,asc
+            examples:
+              - createdAt,desc
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          content:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Message'
+                          pagination:
+                            $ref: '#/components/schemas/Pagination'
+              example:
+                code: 0
+                message: 获取成功
+                data:
+                  content:
+                    - id: 3001
+                      messageType: USER
+                      content: 我最近感到很焦虑，不知道该怎么办
+                      createdAt: '2024-01-01T10:00:00Z'
+                    - id: 3002
+                      messageType: AI
+                      content: 我理解您的感受。焦虑是很常见的情绪反应...
+                      createdAt: '2024-01-01T10:01:00Z'
+                  pagination:
+                    page: 1
+                    size: 50
+                    total: 12
+                    totalPages: 1
+          headers: {}
+        '401':
+          description: 未授权访问
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                '2':
+                  summary: 缺少访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 请提供有效的访问令牌
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+                '3':
+                  summary: 无效访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 访问令牌已过期或无效
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+          headers: {}
+        '403':
+          description: 权限不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10003
+                message: 权限不足
+                details: 您没有访问此资源的权限
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations/2001
+          headers: {}
+        '404':
+          description: 资源不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10004
+                message: 资源不存在
+                details: 指定的对话不存在
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations/9999
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+      security: []
+    post:
+      summary: 发送消息
+      deprecated: false
+      description: 🔐 向指定对话发送消息并获取AI回复
+      tags:
+        - 消息管理
+        - 消息管理
+      parameters:
+        - name: conversationId
+          in: path
+          description: ''
+          required: true
+          example: '8'
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                  minLength: 1
+                  maxLength: 4000
+                  description: 🔐 消息内容，必填
+                  examples:
+                    - 我最近工作压力很大，经常失眠
+                metadata:
+                  type: object
+                  description: 消息元数据，可选
+                  examples:
+                    - sentiment: negative
+                      urgency: normal
+                  properties: {}
+            example:
+              content: 你好，我想咨询一下健康问题
+              role: USER
+              contentType: TEXT
+              metadata: '{"source": "web"}'
+      responses:
+        '201':
+          description: 消息发送成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 0
+                message: 消息发送成功
+                data:
+                  userMessage:
+                    id: 3003
+                    messageType: USER
+                    content: 我最近工作压力很大，经常失眠
+                    createdAt: '2024-01-01T16:00:00Z'
+                  aiMessage:
+                    id: 3004
+                    messageType: AI
+                    content: 工作压力导致的失眠确实很困扰。让我们一起探讨一些缓解压力和改善睡眠的方法...
+                    createdAt: '2024-01-01T16:00:30Z'
+          headers: {}
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10001
+                message: 请求参数错误
+                details: username字段不能为空
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/users
+          headers: {}
+        '401':
+          description: 未授权访问
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                '3':
+                  summary: 缺少访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 请提供有效的访问令牌
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+                '4':
+                  summary: 无效访问令牌
+                  value:
+                    code: 10002
+                    message: 未授权访问
+                    details: 访问令牌已过期或无效
+                    timestamp: '2024-01-01T10:00:00Z'
+                    path: /api/v1/users/profile
+          headers: {}
+        '403':
+          description: 权限不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10003
+                message: 权限不足
+                details: 您没有访问此资源的权限
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations/2001
+          headers: {}
+        '404':
+          description: 资源不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 10004
+                message: 资源不存在
+                details: 指定的对话不存在
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations/9999
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+        '502':
+          description: 外部服务错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50002
+                message: 外部服务错误
+                details: AI服务暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations/2001/messages
+          headers: {}
+      security: []
+  /api/v1/health:
+    get:
+      summary: 健康检查
+      deprecated: false
+      description: 🏥 检查服务运行状态，无需认证
+      tags:
+        - 系统健康检查
+        - 系统健康检查
+      parameters: []
+      responses:
+        '200':
+          description: 服务正常
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 0
+                message: 服务运行正常
+                data:
+                  status: UP
+                  timestamp: '2024-01-15T10:30:00'
+                  application: XLHealth Backend
+                  version: 1.0.0
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+      security: []
+  /api/v1/health/version:
+    get:
+      summary: 版本信息
+      deprecated: false
+      description: 📋 获取应用版本信息
+      tags:
+        - 系统健康检查
+        - 系统健康检查
+      parameters: []
+      responses:
+        '200':
+          description: 版本信息获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 0
+                message: 版本信息
+                data:
+                  application: XLHealth Backend
+                  version: 1.0.0
+                  buildTime: '2024-01-01'
+                  springBootVersion: 3.5.0
+                  javaVersion: 17.0.2
+          headers: {}
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 50001
+                message: 服务器内部错误
+                details: 系统暂时不可用，请稍后重试
+                timestamp: '2024-01-01T10:00:00Z'
+                path: /api/v1/conversations
+          headers: {}
+      security: []
+  /api/ai/chat:
+    post:
+      summary: AI聊天接口
+      deprecated: false
+      description: ''
+      tags:
+        - AI功能测试
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: false
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+            example:
+              conversationId: conv_123
+              message: 我觉得活着没有意义
+              emotionalState: 绝望
+              parameters:
+                maxTokens: 300
+                temperature: 0.8
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      content:
+                        type: string
+                      qualityScore:
+                        type: integer
+                      replyType:
+                        type: string
+                      success:
+                        type: boolean
+                      provider:
+                        type: string
+                      timestamp:
+                        type: integer
+                    required:
+                      - content
+                      - qualityScore
+                      - replyType
+                      - success
+                      - provider
+                      - timestamp
+                  timestamp:
+                    type: string
+                required:
+                  - success
+                  - code
+                  - message
+                  - data
+                  - timestamp
+          headers: {}
+      security: []
+  /api/ai/health:
+    get:
+      summary: 检查AI服务健康状态
+      deprecated: false
+      description: ''
+      tags:
+        - AI服务监控
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: true
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+          headers: {}
+      security: []
+  /api/ai/stats:
+    get:
+      summary: 获取AI服务统计信息
+      deprecated: false
+      description: ''
+      tags:
+        - AI服务监控
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: true
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+          headers: {}
+      security: []
+  /api/ai/config:
+    get:
+      summary: 获取AI服务配置信息
+      deprecated: false
+      description: ''
+      tags:
+        - AI服务监控
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          required: true
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+          headers: {}
+      security: []
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description: 响应码，0表示成功，非0表示错误
+          examples:
+            - 0
+        message:
+          type: string
+          description: 响应消息
+          examples:
+            - 操作成功
+        data:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+          description: 响应时间戳
+          examples:
+            - '2024-01-01T10:00:00Z'
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description: 错误码
+          examples:
+            - 10001
+        message:
+          type: string
+          description: 错误消息
+          examples:
+            - 请求参数错误
+        details:
+          type: string
+          description: 错误详情
+          examples:
+            - username字段不能为空
+        timestamp:
+          type: string
+          format: date-time
+          description: 错误时间戳
+          examples:
+            - '2024-01-01T10:00:00Z'
+        path:
+          type: string
+          description: 请求路径
+          examples:
+            - /api/v1/users
+    Pagination:
+      type: object
+      required:
+        - page
+        - size
+        - total
+        - totalPages
+      properties:
+        page:
+          type: integer
+          description: 当前页码
+          examples:
+            - 1
+        size:
+          type: integer
+          description: 每页数量
+          examples:
+            - 20
+        total:
+          type: integer
+          format: int64
+          description: 总记录数
+          examples:
+            - 100
+        totalPages:
+          type: integer
+          description: 总页数
+          examples:
+            - 5
+        hasNext:
+          type: boolean
+          description: 是否有下一页
+          examples:
+            - true
+        hasPrevious:
+          type: boolean
+          description: 是否有上一页
+          examples:
+            - false
+    Conversation:
+      type: object
+      required:
+        - id
+        - title
+        - status
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 对话ID
+          examples:
+            - 2001
+        title:
+          type: string
+          description: 对话标题
+          examples:
+            - 关于焦虑的咨询
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - ARCHIVED
+            - DELETED
+          description: 对话状态
+          examples:
+            - ACTIVE
+        metadata:
+          type: object
+          description: 对话元数据
+          examples:
+            - tags:
+                - anxiety
+          properties: {}
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+          examples:
+            - '2024-01-01T10:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新时间
+          examples:
+            - '2024-01-01T10:00:00Z'
+        lastMessageAt:
+          type: string
+          format: date-time
+          description: 最后消息时间
+          examples:
+            - '2024-01-01T15:30:00Z'
+        messageCount:
+          type: integer
+          description: 消息数量
+          examples:
+            - 12
+    Message:
+      type: object
+      required:
+        - id
+        - messageType
+        - content
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 消息ID
+          examples:
+            - 3001
+        messageType:
+          type: string
+          enum:
+            - USER
+            - AI
+            - SYSTEM
+          description: 消息类型
+          examples:
+            - USER
+        content:
+          type: string
+          description: 消息内容
+          examples:
+            - 我最近感到很焦虑
+        metadata:
+          type: object
+          description: 消息元数据
+          examples:
+            - sentiment: negative
+          properties: {}
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+          examples:
+            - '2024-01-01T10:00:00Z'
+        isDeleted:
+          type: boolean
+          description: 是否已删除
+          examples:
+            - false
+  securitySchemes: {}
+servers: []
+security: []

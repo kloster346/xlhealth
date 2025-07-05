@@ -17,12 +17,25 @@
         <el-form-item label="头像" prop="avatar">
           <div class="avatar-section">
             <el-avatar :size="80" class="avatar-display">
-              <img v-if="profileForm.avatar" :src="profileForm.avatar" alt="头像" />
+              <img v-if="profileAvatarUrl" :src="profileAvatarUrl" alt="头像" />
               <el-icon v-else><User /></el-icon>
             </el-avatar>
             <div class="avatar-actions">
-              <el-button size="small" @click="handleAvatarUpload">更换头像</el-button>
+              <el-button 
+                size="small" 
+                :loading="avatarUploading"
+                @click="handleAvatarUpload"
+              >
+                {{ avatarUploading ? '上传中...' : '更换头像' }}
+              </el-button>
               <p class="avatar-tip">支持 JPG、PNG 格式，文件大小不超过 2MB</p>
+              <input 
+                ref="avatarInputRef" 
+                type="file" 
+                accept="image/*" 
+                @change="handleFileChange" 
+                style="display: none;"
+              />
             </div>
           </div>
         </el-form-item>
@@ -133,29 +146,37 @@ import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
 import { User } from '@element-plus/icons-vue'
 import { validateEmail, validateNickname } from '../utils/validation'
-import { updateUserInfo, changePassword } from '../api/auth'
-
+import { updateUserInfo, changePassword, uploadAvatar } from '../api/services'
+import { buildAvatarUrl } from '../utils/url'
 export default {
   name: 'UserProfileEdit',
   components: {
     User
   },
-  setup() {
+  emits: ['profile-updated'],
+  setup(props, { emit }) {
     const store = useStore()
     const profileFormRef = ref()
     const passwordFormRef = ref()
+    const avatarInputRef = ref()
     const loading = ref(false)
     const passwordLoading = ref(false)
+    const avatarUploading = ref(false)
     const emailDisabled = ref(true)
     
     // 当前用户信息
     const currentUser = computed(() => store.getters.currentUser)
     
+    // 计算完整的头像URL
+    const profileAvatarUrl = computed(() => {
+      return profileForm.avatarUrl ? buildAvatarUrl(profileForm.avatarUrl) : ''
+    })
+    
     // 个人资料表单
     const profileForm = reactive({
       nickname: '',
       email: '',
-      avatar: ''
+      avatarUrl: ''
     })
     
     // 密码修改表单
@@ -206,7 +227,7 @@ export default {
       if (currentUser.value) {
         profileForm.nickname = currentUser.value.nickname || ''
         profileForm.email = currentUser.value.email || ''
-        profileForm.avatar = currentUser.value.avatar || ''
+        profileForm.avatarUrl = currentUser.value.avatarUrl || ''
       }
     }
     
@@ -217,7 +238,60 @@ export default {
     
     // 处理头像上传
     const handleAvatarUpload = () => {
-      ElMessage.info('头像上传功能将在后续版本中实现')
+      if (avatarUploading.value) return
+      avatarInputRef.value?.click()
+    }
+    
+    // 处理文件选择
+    const handleFileChange = async (event) => {
+      const file = event.target.files[0]
+      if (!file) return
+      
+      // 验证文件类型
+      if (!file.type.startsWith('image/')) {
+        ElMessage.error('请选择图片文件')
+        return
+      }
+      
+      // 验证文件大小（限制为2MB）
+      if (file.size > 2 * 1024 * 1024) {
+        ElMessage.error('图片大小不能超过2MB')
+        return
+      }
+      
+      try {
+        avatarUploading.value = true
+        ElMessage.info('正在上传头像...')
+        
+        // 创建FormData
+        const formData = new FormData()
+        formData.append('file', file)
+        
+        // 调用上传API
+        const response = await uploadAvatar(formData)
+        
+        if (response.success) {
+          // 更新表单中的头像URL
+          profileForm.avatarUrl = response.avatarUrl
+          
+          // 立即更新store中的用户信息，确保头部导航栏头像同步更新
+          const updatedUser = { ...store.getters.currentUser, avatarUrl: response.avatarUrl }
+          store.commit('SET_USER', updatedUser)
+          
+          ElMessage.success('头像上传成功')
+        } else {
+          ElMessage.error(response.message || '头像上传失败')
+        }
+      } catch (error) {
+        console.error('头像上传失败:', error)
+        ElMessage.error('头像上传失败')
+      } finally {
+        avatarUploading.value = false
+        // 清空input值，允许重复选择同一文件
+        if (avatarInputRef.value) {
+          avatarInputRef.value.value = ''
+        }
+      }
     }
     
     // 保存个人资料
@@ -231,17 +305,24 @@ export default {
         loading.value = true
         
         // 调用更新API
-        const response = await updateUserInfo(currentUser.value.id, {
+        const response = await updateUserInfo({
           nickname: profileForm.nickname,
           email: profileForm.email,
-          avatar: profileForm.avatar
+          avatarUrl: profileForm.avatarUrl
         })
         
         // 更新store中的用户信息
-        store.dispatch('updateUser', response.user)
+        if (response.success && response.user) {
+          store.commit('SET_USER', response.user)
+        } else if (response.data) {
+          store.commit('SET_USER', response.data)
+        }
         
         ElMessage.success('个人资料更新成功')
         emailDisabled.value = true
+        
+        // 触发父组件刷新
+        emit('profile-updated')
         
       } catch (error) {
         ElMessage.error(error.message || '更新失败，请重试')
@@ -268,7 +349,7 @@ export default {
         passwordLoading.value = true
         
         // 调用修改密码API
-        await changePassword(currentUser.value.id, {
+        await changePassword({
           oldPassword: passwordForm.oldPassword,
           newPassword: passwordForm.newPassword
         })
@@ -299,15 +380,19 @@ export default {
     return {
       profileFormRef,
       passwordFormRef,
+      avatarInputRef,
       profileForm,
       passwordForm,
       profileRules,
       passwordRules,
       loading,
       passwordLoading,
+      avatarUploading,
       emailDisabled,
+      profileAvatarUrl,
       enableEmailEdit,
       handleAvatarUpload,
+      handleFileChange,
       handleSave,
       handleCancel,
       handlePasswordChange,

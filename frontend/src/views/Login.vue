@@ -63,7 +63,7 @@ import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { validateEmail } from '../utils/validation'
-import { loginUser } from '../api/auth'
+import { loginUser } from '../api/services'
 
 export default {
   name: 'LoginPage',
@@ -104,10 +104,19 @@ export default {
         // 调用登录API
         const response = await loginUser(loginForm)
         
+        // 检查登录是否成功
+        if (!response.success) {
+          ElMessage.error(response.message || '登录失败，请检查邮箱和密码')
+          return
+        }
+        
+        // 从response.data中获取用户信息和token
+        const { userInfo, accessToken } = response.data
+        
         // 保存用户信息和token到store
         await store.dispatch('login', {
-          user: response.user,
-          token: response.token
+          user: userInfo,
+          token: accessToken
         })
         
         ElMessage.success('登录成功')
@@ -117,6 +126,7 @@ export default {
         router.push(redirect)
         
       } catch (error) {
+        console.error('登录错误:', error)
         ElMessage.error(error.message || '登录失败，请检查邮箱和密码')
       } finally {
         loading.value = false

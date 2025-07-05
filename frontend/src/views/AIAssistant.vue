@@ -183,27 +183,53 @@ export default {
     // 加载对话列表
     const loadConversations = async () => {
       try {
-        const data = await chatService.getConversations()
-        conversations.value = data
+        const response = await chatService.getConversations()
+        if (response.success) {
+          // 从分页响应中提取对话数组，并确保每个对话都有 messages 数组
+          const conversationList = response.data?.records || []
+          conversations.value = conversationList.map(conversation => ({
+            ...conversation,
+            messages: conversation.messages || [] // 确保 messages 数组存在
+          }))
+        } else {
+          console.error('加载对话列表失败:', response.message)
+          conversations.value = []
+        }
         
         // 如果有对话且没有选中的对话，选中第一个
-        if (data.length > 0 && !currentConversationId.value) {
-          currentConversationId.value = data[0].id
+        if (conversations.value.length > 0 && !currentConversationId.value) {
+          await selectConversation(conversations.value[0].id)
         }
       } catch (error) {
         console.error('加载对话列表失败:', error)
         ElMessage.error('加载对话列表失败')
+        conversations.value = []
       }
     }
     
     // 创建新对话
     const createNewConversation = async () => {
+      if (creating.value) return
+      
       creating.value = true
       try {
-        const newConversation = await chatService.createConversation()
-        conversations.value.unshift(newConversation)
-        currentConversationId.value = newConversation.id
-        ElMessage.success('新对话创建成功')
+        const response = await chatService.createConversation({
+          title: '新对话'
+        })
+        if (response.success) {
+          const newConversation = response.data || response.conversation
+          // 确保新对话有 messages 数组
+          const conversationWithMessages = {
+            ...newConversation,
+            messages: newConversation.messages || []
+          }
+          conversations.value.unshift(conversationWithMessages)
+          await selectConversation(conversationWithMessages.id)
+          ElMessage.success('新对话创建成功')
+        } else {
+          console.error('创建对话失败:', response.message)
+          ElMessage.error(response.message || '创建对话失败')
+        }
       } catch (error) {
         console.error('创建对话失败:', error)
         ElMessage.error('创建对话失败')
@@ -213,8 +239,39 @@ export default {
     }
     
     // 选择对话
-    const selectConversation = (conversationId) => {
+    const selectConversation = async (conversationId) => {
       currentConversationId.value = conversationId
+      
+      // 加载该对话的消息历史
+      const conversation = conversations.value.find(c => c.id === conversationId)
+      if (conversation && (!conversation.messages || conversation.messages.length === 0)) {
+        try {
+          const response = await chatService.getMessages(conversationId)
+          if (response.success) {
+            // 正确处理分页响应格式：response.data.records 是消息数组
+            const messages = response.data?.records || []
+            // 为每个消息设置正确的type字段，用于前端显示
+            conversation.messages = messages.map(message => ({
+              ...message,
+              type: message.role === 'USER' ? 'user' : 'ai',
+              timestamp: message.createdTime || message.createdAt
+            }))
+          } else {
+            console.error('加载对话消息失败:', response.message)
+            // 确保 messages 数组存在，即使加载失败
+            if (!conversation.messages) {
+              conversation.messages = []
+            }
+          }
+        } catch (error) {
+          console.error('加载对话消息失败:', error)
+          // 确保 messages 数组存在，即使加载失败
+          if (!conversation.messages) {
+            conversation.messages = []
+          }
+        }
+      }
+      
       scrollToBottom()
     }
     
@@ -231,15 +288,24 @@ export default {
           }
         )
         
-        await chatService.deleteConversation(conversationId)
-        conversations.value = conversations.value.filter(c => c.id !== conversationId)
-        
-        // 如果删除的是当前对话，清空选中状态
-        if (currentConversationId.value === conversationId) {
-          currentConversationId.value = conversations.value.length > 0 ? conversations.value[0].id : null
+        const response = await chatService.deleteConversation(conversationId)
+        if (response.success) {
+          conversations.value = conversations.value.filter(c => c.id !== conversationId)
+          
+          // 如果删除的是当前对话，选择第一个可用对话
+          if (currentConversationId.value === conversationId) {
+            if (conversations.value.length > 0) {
+              await selectConversation(conversations.value[0].id)
+            } else {
+              currentConversationId.value = null
+            }
+          }
+          
+          ElMessage.success('对话删除成功')
+        } else {
+          console.error('删除对话失败:', response.message)
+          ElMessage.error(response.message || '删除对话失败')
         }
-        
-        ElMessage.success('对话删除成功')
       } catch (error) {
         if (error !== 'cancel') {
           console.error('删除对话失败:', error)
@@ -257,44 +323,125 @@ export default {
       const message = inputMessage.value.trim()
       inputMessage.value = ''
       sending.value = true
+      
+      // 立即添加用户消息到界面
+      const conversation = conversations.value.find(c => c.id === currentConversationId.value)
+      if (conversation) {
+        // 确保 messages 数组存在
+        if (!conversation.messages) {
+          conversation.messages = []
+        }
+        
+        // 创建用户消息对象
+        const userMessage = {
+          id: Date.now(), // 临时ID
+          content: message,
+          role: 'USER',
+          contentType: 'TEXT',
+          type: 'user',
+          createdAt: new Date().toISOString()
+        }
+        
+        // 立即显示用户消息
+        conversation.messages.push(userMessage)
+        scrollToBottom()
+        
+        // 更新对话标题（如果是第一条用户消息）
+        if (conversation.messages.filter(m => m.type === 'user').length === 1) {
+          const newTitle = message.length > 20 
+            ? message.substring(0, 20) + '...' 
+            : message
+          conversation.title = newTitle
+          
+          // 调用后端API更新对话标题
+          try {
+            await chatService.updateConversation(currentConversationId.value, {
+              title: newTitle
+            })
+          } catch (error) {
+            console.error('更新对话标题失败:', error)
+            // 即使后端更新失败，前端标题仍然保持更新，不影响用户体验
+          }
+        }
+      }
+      
       aiTyping.value = true
       
       try {
-        const result = await chatService.sendMessage(currentConversationId.value, message)
+        const response = await chatService.sendMessage(currentConversationId.value, {
+          content: message,
+          role: 'USER',
+          contentType: 'TEXT'
+        })
         
-        if (result.error) {
-          ElMessage.error(result.error)
+        if (!response.success) {
+          ElMessage.error(response.message || '发送消息失败')
+          // 发送失败时移除刚添加的用户消息
+          if (conversation && conversation.messages && conversation.messages.length > 0) {
+            conversation.messages.pop()
+          }
           return
         }
         
-        // 更新当前对话
-        const conversation = conversations.value.find(c => c.id === currentConversationId.value)
+        // 用户消息发送成功后，调用AI回复生成接口
         if (conversation) {
-          conversation.messages.push(result.userMessage)
-          scrollToBottom()
-          
-          // 等待AI回复
-          setTimeout(() => {
-            conversation.messages.push(result.aiMessage)
-            conversation.updatedAt = result.aiMessage.timestamp
+          try {
+            // 调用AI回复生成接口
+             const aiResponse = await chatService.generateAIReply(currentConversationId.value, {
+               message: message,
+               emotionalState: null, // 可以根据需要添加情绪状态检测
+               context: {
+                 includeHistory: true,
+                 historyLimit: 10,
+                 includeUserProfile: true
+               },
+               preferences: {
+                 preferredType: 'EMOTIONAL_SUPPORT',
+                 length: 'MEDIUM',
+                 tone: 'WARM',
+                 includeAdvice: true,
+                 includeQuestions: true
+               }
+             })
             
-            // 更新对话标题
-            if (conversation.messages.filter(m => m.type === 'user').length === 1) {
-              conversation.title = result.userMessage.content.length > 20 
-                ? result.userMessage.content.substring(0, 20) + '...' 
-                : result.userMessage.content
-            }
-            
-            aiTyping.value = false
-            scrollToBottom()
-          }, Math.random() * 2000 + 1000)
+            if (aiResponse.success && aiResponse.data) {
+               // 确保 messages 数组存在
+               if (!conversation.messages) {
+                 conversation.messages = []
+               }
+               
+               // 添加AI回复消息到对话中
+               const aiMessage = {
+                 id: aiResponse.data.id || Date.now() + 1,
+                 content: aiResponse.data.content,
+                 role: aiResponse.data.role || 'ASSISTANT',
+                 contentType: aiResponse.data.contentType || 'TEXT',
+                 type: 'ai',
+                 timestamp: aiResponse.data.createdTime || new Date().toISOString()
+               }
+               
+               conversation.messages.push(aiMessage)
+               scrollToBottom()
+             } else {
+               console.error('AI回复生成失败:', aiResponse.message)
+               ElMessage.error(aiResponse.message || 'AI回复生成失败')
+             }
+          } catch (aiError) {
+            console.error('调用AI回复接口失败:', aiError)
+            ElMessage.error('AI回复生成失败，请稍后重试')
+          }
         }
       } catch (error) {
         console.error('发送消息失败:', error)
         ElMessage.error('发送消息失败')
-        aiTyping.value = false
+        // 发送失败时移除刚添加的用户消息
+        if (conversation && conversation.messages && conversation.messages.length > 0) {
+          conversation.messages.pop()
+        }
       } finally {
         sending.value = false
+        aiTyping.value = false
+        scrollToBottom()
       }
     }
     
@@ -329,7 +476,8 @@ export default {
       deleteConversation,
       sendMessage,
       handleEnterKey,
-      handleShiftEnter
+      handleShiftEnter,
+      scrollToBottom
     }
   }
 }
