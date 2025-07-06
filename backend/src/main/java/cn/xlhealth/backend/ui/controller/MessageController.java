@@ -4,7 +4,7 @@ import cn.xlhealth.backend.entity.Message;
 import cn.xlhealth.backend.service.MessageService;
 import cn.xlhealth.backend.ui.dto.*;
 import cn.xlhealth.backend.ui.dto.ApiResponse;
-import cn.xlhealth.backend.dto.AIReplyRequest;
+import cn.xlhealth.backend.ui.dto.request.AIReplyRequest;
 import cn.xlhealth.backend.ui.dto.request.BatchDeleteMessageRequest;
 import cn.xlhealth.backend.ui.dto.request.MessageStatusUpdateRequest;
 import org.springframework.security.core.Authentication;

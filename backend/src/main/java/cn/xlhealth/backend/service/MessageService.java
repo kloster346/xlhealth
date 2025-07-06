@@ -1,6 +1,6 @@
 package cn.xlhealth.backend.service;
 
-import cn.xlhealth.backend.dto.AIReplyRequest;
+import cn.xlhealth.backend.ui.dto.request.AIReplyRequest;
 import cn.xlhealth.backend.entity.Message;
 import cn.xlhealth.backend.ui.dto.PageResponse;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;

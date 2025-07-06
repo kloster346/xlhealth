@@ -1,6 +1,6 @@
 package cn.xlhealth.backend.service.impl;
 
-import cn.xlhealth.backend.dto.AIReplyRequest;
+import cn.xlhealth.backend.ui.dto.request.AIReplyRequest;
 import cn.xlhealth.backend.entity.Conversation;
 import cn.xlhealth.backend.entity.Message;
 import cn.xlhealth.backend.mapper.MessageMapper;
@@ -162,39 +162,39 @@ public class MessageServiceImpl implements MessageService {
             aiRequest.setUserId(userId);
             aiRequest.setConversationId(conversationId);
             aiRequest.setUserMessage(request.getMessage());
-            
+
             // 设置上下文信息
             if (request.getContext() != null) {
                 AIReplyRequest.ContextInfo contextInfo = request.getContext();
                 if (contextInfo.getIncludeHistory() != null && contextInfo.getIncludeHistory()) {
                     // 获取历史消息作为上下文
-                    List<Message> historyMessages = getConversationMessages(conversationId, 
-                        contextInfo.getHistoryLimit() != null ? contextInfo.getHistoryLimit() : 10);
-                    
+                    List<Message> historyMessages = getConversationMessages(conversationId,
+                            contextInfo.getHistoryLimit() != null ? contextInfo.getHistoryLimit() : 10);
+
                     // 转换为ContextMessage格式
                     List<ContextMessage> contextMessages = historyMessages.stream()
-                        .map(msg -> {
-                            ContextMessage contextMsg = new ContextMessage();
-                            contextMsg.setMessageId(msg.getId());
-                            contextMsg.setMessageType(msg.getRole().name());
-                            contextMsg.setContent(msg.getContent());
-                            contextMsg.setTimestamp(msg.getCreatedTime().toEpochSecond(ZoneOffset.UTC) * 1000);
-                            return contextMsg;
-                        })
-                        .collect(java.util.stream.Collectors.toList());
-                    
+                            .map(msg -> {
+                                ContextMessage contextMsg = new ContextMessage();
+                                contextMsg.setMessageId(msg.getId());
+                                contextMsg.setMessageType(msg.getRole().name());
+                                contextMsg.setContent(msg.getContent());
+                                contextMsg.setTimestamp(msg.getCreatedTime().toEpochSecond(ZoneOffset.UTC) * 1000);
+                                return contextMsg;
+                            })
+                            .collect(java.util.stream.Collectors.toList());
+
                     aiRequest.setContext(contextMessages);
                 }
             }
-            
+
             // 设置额外参数（将偏好设置和其他参数合并到parameters中）
             Map<String, Object> parameters = new java.util.HashMap<>();
-            
+
             // 设置情绪状态
             if (request.getEmotionalState() != null) {
                 parameters.put("emotionalState", request.getEmotionalState());
             }
-            
+
             if (request.getPreferences() != null) {
                 AIReplyRequest.ReplyPreferences prefs = request.getPreferences();
                 if (prefs.getPreferredType() != null) {
@@ -213,12 +213,12 @@ public class MessageServiceImpl implements MessageService {
                     parameters.put("includeQuestions", prefs.getIncludeQuestions());
                 }
             }
-            
+
             // 合并用户提供的额外参数
             if (request.getParameters() != null) {
                 parameters.putAll(request.getParameters());
             }
-            
+
             aiRequest.setParameters(parameters);
 
             // 4. 调用AI服务生成回复
