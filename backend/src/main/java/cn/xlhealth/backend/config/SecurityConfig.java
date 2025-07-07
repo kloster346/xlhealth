@@ -96,6 +96,7 @@ public class SecurityConfig {
                                     "/api/v1/auth/login",
                                     "/api/v1/auth/validate",
                                     "/api/v1/health/**",
+                                    "/api/ai/health", // AI服务健康检查
                                     "/api/v1/files/**", // 静态文件访问
                                     "/actuator/**",
                                     "/swagger-ui/**",

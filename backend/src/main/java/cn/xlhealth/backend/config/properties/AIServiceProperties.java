@@ -11,12 +11,12 @@ public class AIServiceProperties {
     /**
      * 是否启用模拟模式
      */
-    private boolean mockEnabled = true;
+    private boolean mockMode = false;
     
     /**
      * AI服务提供商类型
      */
-    private String provider = "mock";
+    private String provider = "DEEPSEEK";
     
     /**
      * 上下文配置
@@ -38,11 +38,33 @@ public class AIServiceProperties {
      */
     private Fallback fallback = new Fallback();
     
+    /**
+     * DeepSeek服务配置
+     */
+    private DeepSeek deepseek = new DeepSeek();
+    
     public static class Context {
         /**
          * 上下文窗口大小（保留最近N条消息）
          */
         private int windowSize = 10;
+        
+        /**
+         * 最大上下文消息数量（与windowSize同义，用于配置文件映射）
+         */
+        @com.fasterxml.jackson.annotation.JsonProperty("max-messages")
+        private int maxMessages = 20;
+        
+        /**
+         * 是否启用上下文管理
+         */
+        private boolean enabled = true;
+        
+        /**
+         * 上下文过期时间（小时）
+         */
+        @com.fasterxml.jackson.annotation.JsonProperty("expiry-hours")
+        private int expiryHours = 24;
         
         /**
          * 上下文缓存过期时间（分钟）
@@ -52,7 +74,14 @@ public class AIServiceProperties {
         /**
          * 是否启用上下文摘要
          */
+        @com.fasterxml.jackson.annotation.JsonProperty("summary-enabled")
         private boolean summaryEnabled = true;
+        
+        /**
+         * 摘要触发的消息数量阈值
+         */
+        @com.fasterxml.jackson.annotation.JsonProperty("summary-threshold")
+        private int summaryThreshold = 10;
         
         // Getters and Setters
         public int getWindowSize() {
@@ -61,6 +90,32 @@ public class AIServiceProperties {
         
         public void setWindowSize(int windowSize) {
             this.windowSize = windowSize;
+        }
+        
+        public int getMaxMessages() {
+            return maxMessages;
+        }
+        
+        public void setMaxMessages(int maxMessages) {
+            this.maxMessages = maxMessages;
+            // 同时更新windowSize以保持一致性
+            this.windowSize = maxMessages;
+        }
+        
+        public boolean isEnabled() {
+            return enabled;
+        }
+        
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+        
+        public int getExpiryHours() {
+            return expiryHours;
+        }
+        
+        public void setExpiryHours(int expiryHours) {
+            this.expiryHours = expiryHours;
         }
         
         public int getCacheExpireMinutes() {
@@ -77,6 +132,14 @@ public class AIServiceProperties {
         
         public void setSummaryEnabled(boolean summaryEnabled) {
             this.summaryEnabled = summaryEnabled;
+        }
+        
+        public int getSummaryThreshold() {
+            return summaryThreshold;
+        }
+        
+        public void setSummaryThreshold(int summaryThreshold) {
+            this.summaryThreshold = summaryThreshold;
         }
     }
     
@@ -232,13 +295,97 @@ public class AIServiceProperties {
         }
     }
     
-    // Main class getters and setters
-    public boolean isMockEnabled() {
-        return mockEnabled;
+    public static class DeepSeek {
+        /**
+         * API密钥
+         */
+        @com.fasterxml.jackson.annotation.JsonProperty("api-key")
+        private String apiKey;
+        
+        /**
+         * API基础URL
+         */
+        @com.fasterxml.jackson.annotation.JsonProperty("api-base")
+        private String apiBase = "https://api.deepseek.com";
+        
+        /**
+         * 使用的模型
+         */
+        private String model = "deepseek-chat";
+        
+        /**
+         * 最大token数
+         */
+        @com.fasterxml.jackson.annotation.JsonProperty("max-tokens")
+        private int maxTokens = 2048;
+        
+        /**
+         * 温度参数 (0.0-2.0)
+         */
+        private double temperature = 0.7;
+        
+        /**
+         * 请求超时时间(毫秒)
+         */
+        private int timeout = 30000;
+        
+        // Getters and Setters
+        public String getApiKey() {
+            return apiKey;
+        }
+        
+        public void setApiKey(String apiKey) {
+            this.apiKey = apiKey;
+        }
+        
+        public String getApiBase() {
+            return apiBase;
+        }
+        
+        public void setApiBase(String apiBase) {
+            this.apiBase = apiBase;
+        }
+        
+        public String getModel() {
+            return model;
+        }
+        
+        public void setModel(String model) {
+            this.model = model;
+        }
+        
+        public int getMaxTokens() {
+            return maxTokens;
+        }
+        
+        public void setMaxTokens(int maxTokens) {
+            this.maxTokens = maxTokens;
+        }
+        
+        public double getTemperature() {
+            return temperature;
+        }
+        
+        public void setTemperature(double temperature) {
+            this.temperature = temperature;
+        }
+        
+        public int getTimeout() {
+            return timeout;
+        }
+        
+        public void setTimeout(int timeout) {
+            this.timeout = timeout;
+        }
     }
     
-    public void setMockEnabled(boolean mockEnabled) {
-        this.mockEnabled = mockEnabled;
+    // Main class getters and setters
+    public boolean isMockMode() {
+        return mockMode;
+    }
+    
+    public void setMockMode(boolean mockMode) {
+        this.mockMode = mockMode;
     }
     
     public String getProvider() {
@@ -279,5 +426,13 @@ public class AIServiceProperties {
     
     public void setFallback(Fallback fallback) {
         this.fallback = fallback;
+    }
+    
+    public DeepSeek getDeepseek() {
+        return deepseek;
+    }
+    
+    public void setDeepseek(DeepSeek deepseek) {
+        this.deepseek = deepseek;
     }
 }

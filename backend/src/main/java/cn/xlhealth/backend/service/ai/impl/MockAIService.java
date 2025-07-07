@@ -75,7 +75,7 @@ public class MockAIService implements AIService {
 
     @Override
     public boolean isHealthy() {
-        return aiServiceProperties.isMockEnabled();
+        return aiServiceProperties.isMockMode();
     }
 
     @Override
@@ -87,7 +87,7 @@ public class MockAIService implements AIService {
     public java.util.Map<String, Object> getConfigInfo() {
         java.util.Map<String, Object> config = new java.util.HashMap<>();
         config.put("provider", PROVIDER_NAME);
-        config.put("mockMode", aiServiceProperties.isMockEnabled());
+        config.put("mockMode", aiServiceProperties.isMockMode());
         config.put("templateTypes", REPLY_TEMPLATES.size());
         config.put("contextEnabled", aiServiceProperties.getContext().isSummaryEnabled());
         config.put("qualityEnabled", aiServiceProperties.getQuality().isEnabled());

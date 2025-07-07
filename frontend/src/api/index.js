@@ -6,7 +6,7 @@ import axios from 'axios'
 // 创建 axios 实例
 const apiClient = axios.create({
   baseURL: process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081',
-  timeout: 10000,
+  timeout: 60000, // 设置为60秒（1分钟）以支持AI回复等长时间请求
   headers: {
     'Content-Type': 'application/json'
   }

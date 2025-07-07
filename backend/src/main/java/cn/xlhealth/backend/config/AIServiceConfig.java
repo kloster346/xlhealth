@@ -5,6 +5,7 @@ import cn.xlhealth.backend.service.ai.AIService;
 import cn.xlhealth.backend.service.ai.context.ContextManager;
 import cn.xlhealth.backend.service.ai.context.impl.ContextManagerImpl;
 import cn.xlhealth.backend.service.ai.impl.MockAIService;
+import cn.xlhealth.backend.service.ai.impl.DeepSeekAIService;
 import cn.xlhealth.backend.service.ai.monitor.ServiceMonitor;
 import cn.xlhealth.backend.service.ai.monitor.impl.ServiceMonitorImpl;
 import cn.xlhealth.backend.service.ai.quality.QualityAssessor;
@@ -36,16 +37,27 @@ public class AIServiceConfig {
     @Primary
     public AIService aiService(AIServiceProperties properties) {
         logger.info("Initializing AI Service with provider: {}, mock mode: {}", 
-                properties.getProvider(), properties.isMockEnabled());
+                properties.getProvider(), properties.isMockMode());
         
-        // 目前只有Mock实现，后续可以根据provider类型创建不同的实现
-        if (properties.isMockEnabled() || "MOCK".equalsIgnoreCase(properties.getProvider())) {
+        // 如果启用模拟模式，直接返回Mock服务
+        if (properties.isMockMode()) {
+            logger.info("Mock mode enabled, using MockAIService");
             return new MockAIService();
         }
         
-        // 默认使用Mock服务
-        logger.warn("Unknown provider: {}, falling back to Mock service", properties.getProvider());
-        return new MockAIService();
+        // 根据provider类型创建不同的实现
+        String provider = properties.getProvider().toUpperCase();
+        switch (provider) {
+            case "MOCK":
+                logger.info("Using MockAIService");
+                return new MockAIService();
+            case "DEEPSEEK":
+                logger.info("Using DeepSeekAIService");
+                return new DeepSeekAIService();
+            default:
+                logger.warn("Unknown provider: {}, falling back to Mock service", properties.getProvider());
+                return new MockAIService();
+        }
     }
     
     /**

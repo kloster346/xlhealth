@@ -1,7 +1,15 @@
 server:
   port: 8081
+  # 服务器超时配置
+  tomcat:
+    connection-timeout: 60000  # 连接超时60秒
+    max-connections: 8192
+    max-threads: 200
+    accept-count: 100
 
 spring:
+  profiles:
+    active: ai
   datasource:
     url: jdbc:mysql://localhost:3306/xlhealth?characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -16,6 +24,8 @@ spring:
       max-request-size: 10MB
       file-size-threshold: 0
       location: ${java.io.tmpdir}
+    session:
+      timeout: 30m  # 会话超时30分钟
 
   # Flyway数据库迁移配置
   flyway:

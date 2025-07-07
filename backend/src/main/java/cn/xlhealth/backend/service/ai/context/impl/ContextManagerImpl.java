@@ -39,6 +39,12 @@ public class ContextManagerImpl implements ContextManager {
     @Override
     public List<ContextMessage> getContext(Long conversationId, int limit) {
         try {
+            // 检查上下文功能是否启用
+            if (!aiServiceProperties.getContext().isEnabled()) {
+                logger.debug("上下文功能已禁用");
+                return new ArrayList<>();
+            }
+            
             // 检查缓存
             if (isCacheValid(conversationId)) {
                 List<ContextMessage> cachedContext = contextCache.get(conversationId);
@@ -92,9 +98,9 @@ public class ContextManagerImpl implements ContextManager {
             context.add(0, message); // 添加到开头
 
             // 限制缓存大小
-            int windowSize = aiServiceProperties.getContext().getWindowSize();
-            if (context.size() > windowSize) {
-                context = context.subList(0, windowSize);
+            int maxMessages = aiServiceProperties.getContext().getMaxMessages();
+            if (context.size() > maxMessages) {
+                context = context.subList(0, maxMessages);
                 contextCache.put(conversationId, context);
             }
 
@@ -122,7 +128,7 @@ public class ContextManagerImpl implements ContextManager {
         }
 
         try {
-            List<ContextMessage> context = getContext(conversationId, aiServiceProperties.getContext().getWindowSize());
+            List<ContextMessage> context = getContext(conversationId, aiServiceProperties.getContext().getMaxMessages());
 
             if (context.isEmpty()) {
                 return "暂无对话历史";

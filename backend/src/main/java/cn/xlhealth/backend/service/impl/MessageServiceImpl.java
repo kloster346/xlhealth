@@ -53,60 +53,122 @@ public class MessageServiceImpl implements MessageService {
     @Override
     @Transactional
     public Message generateAIReply(Long conversationId, Long userId, String userMessage) {
-        log.info("生成AI回复: conversationId={}, userId={}, userMessage={}", conversationId, userId, userMessage);
+        log.info("生成AI回复（简化版）: conversationId={}, userId={}, userMessage={}", conversationId, userId, userMessage);
 
         // 验证用户是否有权限访问对话
         validateUserAccessToConversationMessages(conversationId, userId);
 
-        // 注意：此方法不再保存用户消息，用户消息应该通过sendMessage方法单独保存
-        // 这样可以避免重复保存用户消息的问题
         log.info("开始生成AI回复，用户消息内容: {}", userMessage);
 
-        // 1. 创建AI回复消息（初始状态为处理中）
+        // 1. 创建AI回复消息（直接设置为成功状态，简化处理）
         Message aiMessage = new Message();
         aiMessage.setConversationId(conversationId);
         aiMessage.setUserId(userId);
         aiMessage.setRole(Message.MessageRole.ASSISTANT);
-        aiMessage.setContent("正在生成回复..."); // 设置临时内容，避免数据库约束错误
         aiMessage.setContentType(Message.ContentType.TEXT);
-        aiMessage.setStatus(Message.MessageStatus.PROCESSING);
+        aiMessage.setStatus(Message.MessageStatus.SUCCESS);
         aiMessage.setCreatedTime(LocalDateTime.now());
         aiMessage.setUpdatedTime(LocalDateTime.now());
         aiMessage.setDeleted(false);
 
-        // 先保存处理中状态的AI消息
-        messageMapper.insert(aiMessage);
-
         try {
-            // 3. 构建AI请求
+            // 2. 构建简化的AI请求
             AIRequest aiRequest = new AIRequest();
             aiRequest.setUserId(userId);
             aiRequest.setConversationId(conversationId);
             aiRequest.setUserMessage(userMessage);
 
-            // 4. 调用AI服务生成回复
+            // 3. 调用AI服务生成回复
             AIResponse aiResponse = aiServiceManager.processRequest(aiRequest);
 
             if (aiResponse.isSuccess()) {
-                // 5. 更新AI消息内容和状态
+                // 4. 设置回复内容和相关统计信息
                 aiMessage.setContent(aiResponse.getContent());
-                aiMessage.setTokenCount(aiResponse.getTokenCount());
-                aiMessage.setStatus(Message.MessageStatus.SUCCESS);
-                aiMessage.setUpdatedTime(LocalDateTime.now());
-
-                // 设置AI回复的元数据
-                if (aiResponse.getMetadata() != null) {
-                    aiMessage.setMetadata(aiResponse.getMetadata().toString());
+                
+                // 设置AI服务提供商
+                if (aiResponse.getProvider() != null) {
+                    aiMessage.setModelName(aiResponse.getProvider());
                 }
-
-                log.info("AI回复生成成功: content={}, tokens={}", aiResponse.getContent(), aiResponse.getTokenCount());
+                
+                // 设置响应时间（确保不超出INT范围）
+                if (aiResponse.getResponseTime() != null) {
+                    Long responseTime = aiResponse.getResponseTime();
+                    // 检查是否超出INT范围，如果超出则设置为最大值
+                    if (responseTime > Integer.MAX_VALUE) {
+                        log.warn("响应时间超出INT范围: {}ms，设置为最大值: {}ms", responseTime, Integer.MAX_VALUE);
+                        aiMessage.setResponseTime((long) Integer.MAX_VALUE);
+                    } else {
+                        aiMessage.setResponseTime(responseTime);
+                    }
+                }
+                
+                // 从metadata中提取token统计信息
+                if (aiResponse.getMetadata() != null) {
+                    Map<String, Object> metadata = aiResponse.getMetadata();
+                    log.info("AIResponse metadata内容: {}", metadata);
+                    
+                    // 设置prompt tokens
+                    if (metadata.containsKey("prompt_tokens")) {
+                        Object promptTokens = metadata.get("prompt_tokens");
+                        log.info("提取prompt_tokens: {} (类型: {})", promptTokens, promptTokens != null ? promptTokens.getClass().getSimpleName() : "null");
+                        if (promptTokens instanceof Integer) {
+                            aiMessage.setPromptTokens((Integer) promptTokens);
+                        } else if (promptTokens instanceof Number) {
+                            aiMessage.setPromptTokens(((Number) promptTokens).intValue());
+                        }
+                    }
+                    
+                    // 设置completion tokens
+                    if (metadata.containsKey("completion_tokens")) {
+                        Object completionTokens = metadata.get("completion_tokens");
+                        log.info("提取completion_tokens: {} (类型: {})", completionTokens, completionTokens != null ? completionTokens.getClass().getSimpleName() : "null");
+                        if (completionTokens instanceof Integer) {
+                            aiMessage.setCompletionTokens((Integer) completionTokens);
+                        } else if (completionTokens instanceof Number) {
+                            aiMessage.setCompletionTokens(((Number) completionTokens).intValue());
+                        }
+                    }
+                    
+                    // 设置total tokens
+                    if (metadata.containsKey("total_tokens")) {
+                        Object totalTokens = metadata.get("total_tokens");
+                        log.info("提取total_tokens: {} (类型: {})", totalTokens, totalTokens != null ? totalTokens.getClass().getSimpleName() : "null");
+                        if (totalTokens instanceof Integer) {
+                            aiMessage.setTotalTokens((Integer) totalTokens);
+                            // 同时设置token_count字段（向后兼容）
+                            aiMessage.setTokenCount((Integer) totalTokens);
+                        } else if (totalTokens instanceof Number) {
+                            aiMessage.setTotalTokens(((Number) totalTokens).intValue());
+                            aiMessage.setTokenCount(((Number) totalTokens).intValue());
+                        }
+                    }
+                    
+                    // 设置模型名称（如果metadata中有更详细的模型信息）
+                    if (metadata.containsKey("model")) {
+                        Object model = metadata.get("model");
+                        log.info("提取model: {} (类型: {})", model, model != null ? model.getClass().getSimpleName() : "null");
+                        if (model instanceof String) {
+                            aiMessage.setModelName((String) model);
+                        }
+                    }
+                } else {
+                    log.warn("AIResponse中没有metadata信息");
+                }
+                
+                log.info("AI回复生成成功: content={}, promptTokens={}, completionTokens={}, totalTokens={}, model={}, responseTime={}ms", 
+                    aiResponse.getContent(), 
+                    aiMessage.getPromptTokens(), 
+                    aiMessage.getCompletionTokens(), 
+                    aiMessage.getTotalTokens(),
+                    aiMessage.getModelName(),
+                    aiMessage.getResponseTime());
             } else {
                 // AI服务调用失败
                 aiMessage.setContent("抱歉，我暂时无法回复您的消息，请稍后再试。");
-                aiMessage.setTokenCount(0);
                 aiMessage.setStatus(Message.MessageStatus.FAILED);
-                aiMessage.setUpdatedTime(LocalDateTime.now());
-
+                if (aiResponse.getErrorMessage() != null) {
+                    aiMessage.setErrorMessage(aiResponse.getErrorMessage());
+                }
                 log.error("AI回复生成失败: {}", aiResponse.getErrorMessage());
             }
 
@@ -114,16 +176,22 @@ public class MessageServiceImpl implements MessageService {
             // 异常处理
             log.error("AI回复生成异常", e);
             aiMessage.setContent("抱歉，系统出现异常，请稍后再试。");
-            aiMessage.setTokenCount(0);
             aiMessage.setStatus(Message.MessageStatus.FAILED);
-            aiMessage.setUpdatedTime(LocalDateTime.now());
         }
 
-        // 6. 更新AI消息到数据库
-        messageMapper.updateById(aiMessage);
+        // 5. 保存AI消息到数据库
+        int result = messageMapper.insert(aiMessage);
+        if (result <= 0) {
+            log.error("AI消息保存失败: conversationId={}, userId={}", conversationId, userId);
+            throw new BusinessException("AI消息保存失败");
+        }
 
-        // 7. 更新对话统计信息
-        updateConversationStatistics(conversationId);
+        // 6. 更新对话统计信息
+        try {
+            updateConversationStatistics(conversationId);
+        } catch (Exception e) {
+            log.warn("更新对话统计信息失败，但不影响主流程: {}", e.getMessage());
+        }
 
         log.info("AI回复处理完成: messageId={}, status={}", aiMessage.getId(), aiMessage.getStatus());
         return aiMessage;
@@ -132,118 +200,101 @@ public class MessageServiceImpl implements MessageService {
     @Override
     @Transactional
     public Message generateAIReply(Long conversationId, Long userId, AIReplyRequest request) {
-        log.info("生成AI回复（增强版）: conversationId={}, userId={}, request={}", conversationId, userId, request);
+        log.info("生成AI回复: conversationId={}, userId={}, message={}", conversationId, userId, request.getMessage());
 
         // 验证用户是否有权限访问对话
         validateUserAccessToConversationMessages(conversationId, userId);
 
-        // 注意：此方法不再保存用户消息，用户消息应该通过sendMessage方法单独保存
-        // 这样可以避免重复保存用户消息的问题
         log.info("开始生成AI回复，用户消息内容: {}", request.getMessage());
 
-        // 1. 创建AI回复消息（初始状态为处理中）
+        // 1. 创建AI回复消息（直接设置为成功状态，简化处理）
         Message aiMessage = new Message();
         aiMessage.setConversationId(conversationId);
         aiMessage.setUserId(userId);
         aiMessage.setRole(Message.MessageRole.ASSISTANT);
-        aiMessage.setContent("正在生成回复..."); // 设置临时内容，避免数据库约束错误
         aiMessage.setContentType(Message.ContentType.TEXT);
-        aiMessage.setStatus(Message.MessageStatus.PROCESSING);
+        aiMessage.setStatus(Message.MessageStatus.SUCCESS);
         aiMessage.setCreatedTime(LocalDateTime.now());
         aiMessage.setUpdatedTime(LocalDateTime.now());
         aiMessage.setDeleted(false);
 
-        // 先保存处理中状态的AI消息
-        messageMapper.insert(aiMessage);
-
         try {
-            // 3. 构建AI请求（使用增强的请求信息）
+            // 2. 构建AI请求
             AIRequest aiRequest = new AIRequest();
             aiRequest.setUserId(userId);
             aiRequest.setConversationId(conversationId);
             aiRequest.setUserMessage(request.getMessage());
 
-            // 设置上下文信息
-            if (request.getContext() != null) {
-                AIReplyRequest.ContextInfo contextInfo = request.getContext();
-                if (contextInfo.getIncludeHistory() != null && contextInfo.getIncludeHistory()) {
-                    // 获取历史消息作为上下文
-                    List<Message> historyMessages = getConversationMessages(conversationId,
-                            contextInfo.getHistoryLimit() != null ? contextInfo.getHistoryLimit() : 10);
-
-                    // 转换为ContextMessage格式
-                    List<ContextMessage> contextMessages = historyMessages.stream()
-                            .map(msg -> {
-                                ContextMessage contextMsg = new ContextMessage();
-                                contextMsg.setMessageId(msg.getId());
-                                contextMsg.setMessageType(msg.getRole().name());
-                                contextMsg.setContent(msg.getContent());
-                                contextMsg.setTimestamp(msg.getCreatedTime().toEpochSecond(ZoneOffset.UTC) * 1000);
-                                return contextMsg;
-                            })
-                            .collect(java.util.stream.Collectors.toList());
-
-                    aiRequest.setContext(contextMessages);
-                }
-            }
-
-            // 设置额外参数（将偏好设置和其他参数合并到parameters中）
-            Map<String, Object> parameters = new java.util.HashMap<>();
-
-            // 设置情绪状态
-            if (request.getEmotionalState() != null) {
-                parameters.put("emotionalState", request.getEmotionalState());
-            }
-
-            if (request.getPreferences() != null) {
-                AIReplyRequest.ReplyPreferences prefs = request.getPreferences();
-                if (prefs.getPreferredType() != null) {
-                    parameters.put("preferredType", prefs.getPreferredType());
-                }
-                if (prefs.getTone() != null) {
-                    parameters.put("tone", prefs.getTone());
-                }
-                if (prefs.getLength() != null) {
-                    parameters.put("expectedLength", prefs.getLength());
-                }
-                if (prefs.getIncludeAdvice() != null) {
-                    parameters.put("includeAdvice", prefs.getIncludeAdvice());
-                }
-                if (prefs.getIncludeQuestions() != null) {
-                    parameters.put("includeQuestions", prefs.getIncludeQuestions());
-                }
-            }
-
-            // 合并用户提供的额外参数
-            if (request.getParameters() != null) {
-                parameters.putAll(request.getParameters());
-            }
-
-            aiRequest.setParameters(parameters);
-
-            // 4. 调用AI服务生成回复
+            // 3. 调用AI服务生成回复
             AIResponse aiResponse = aiServiceManager.processRequest(aiRequest);
 
             if (aiResponse.isSuccess()) {
-                // 5. 更新AI消息内容和状态
+                // 4. 设置回复内容和相关统计信息
                 aiMessage.setContent(aiResponse.getContent());
-                aiMessage.setTokenCount(aiResponse.getTokenCount());
-                aiMessage.setStatus(Message.MessageStatus.SUCCESS);
-                aiMessage.setUpdatedTime(LocalDateTime.now());
-
-                // 设置AI回复的元数据
-                if (aiResponse.getMetadata() != null) {
-                    aiMessage.setMetadata(aiResponse.getMetadata().toString());
+                
+                // 设置AI服务提供商
+                if (aiResponse.getProvider() != null) {
+                    aiMessage.setModelName(aiResponse.getProvider());
                 }
-
-                log.info("AI回复生成成功: content={}, tokens={}", aiResponse.getContent(), aiResponse.getTokenCount());
+                
+                // 设置响应时间
+                if (aiResponse.getResponseTime() != null) {
+                    aiMessage.setResponseTime(aiResponse.getResponseTime());
+                }
+                
+                // 从metadata中提取token统计信息
+                if (aiResponse.getMetadata() != null) {
+                    Map<String, Object> metadata = aiResponse.getMetadata();
+                    
+                    // 设置prompt tokens
+                    if (metadata.containsKey("prompt_tokens")) {
+                        Object promptTokens = metadata.get("prompt_tokens");
+                        if (promptTokens instanceof Integer) {
+                            aiMessage.setPromptTokens((Integer) promptTokens);
+                        }
+                    }
+                    
+                    // 设置completion tokens
+                    if (metadata.containsKey("completion_tokens")) {
+                        Object completionTokens = metadata.get("completion_tokens");
+                        if (completionTokens instanceof Integer) {
+                            aiMessage.setCompletionTokens((Integer) completionTokens);
+                        }
+                    }
+                    
+                    // 设置total tokens
+                    if (metadata.containsKey("total_tokens")) {
+                        Object totalTokens = metadata.get("total_tokens");
+                        if (totalTokens instanceof Integer) {
+                            aiMessage.setTotalTokens((Integer) totalTokens);
+                            // 同时设置token_count字段（向后兼容）
+                            aiMessage.setTokenCount((Integer) totalTokens);
+                        }
+                    }
+                    
+                    // 设置模型名称（如果metadata中有更详细的模型信息）
+                    if (metadata.containsKey("model")) {
+                        Object model = metadata.get("model");
+                        if (model instanceof String) {
+                            aiMessage.setModelName((String) model);
+                        }
+                    }
+                }
+                
+                log.info("AI回复生成成功: content={}, promptTokens={}, completionTokens={}, totalTokens={}, model={}, responseTime={}ms", 
+                    aiResponse.getContent(), 
+                    aiMessage.getPromptTokens(), 
+                    aiMessage.getCompletionTokens(), 
+                    aiMessage.getTotalTokens(),
+                    aiMessage.getModelName(),
+                    aiMessage.getResponseTime());
             } else {
                 // AI服务调用失败
                 aiMessage.setContent("抱歉，我暂时无法回复您的消息，请稍后再试。");
-                aiMessage.setTokenCount(0);
                 aiMessage.setStatus(Message.MessageStatus.FAILED);
-                aiMessage.setUpdatedTime(LocalDateTime.now());
-
+                if (aiResponse.getErrorMessage() != null) {
+                    aiMessage.setErrorMessage(aiResponse.getErrorMessage());
+                }
                 log.error("AI回复生成失败: {}", aiResponse.getErrorMessage());
             }
 
@@ -251,16 +302,22 @@ public class MessageServiceImpl implements MessageService {
             // 异常处理
             log.error("AI回复生成异常", e);
             aiMessage.setContent("抱歉，系统出现异常，请稍后再试。");
-            aiMessage.setTokenCount(0);
             aiMessage.setStatus(Message.MessageStatus.FAILED);
-            aiMessage.setUpdatedTime(LocalDateTime.now());
         }
 
-        // 6. 更新AI消息到数据库
-        messageMapper.updateById(aiMessage);
+        // 5. 保存AI消息到数据库
+        int result = messageMapper.insert(aiMessage);
+        if (result <= 0) {
+            log.error("AI消息保存失败: conversationId={}, userId={}", conversationId, userId);
+            throw new BusinessException("AI消息保存失败");
+        }
 
-        // 7. 更新对话统计信息
-        updateConversationStatistics(conversationId);
+        // 6. 更新对话统计信息
+        try {
+            updateConversationStatistics(conversationId);
+        } catch (Exception e) {
+            log.warn("更新对话统计信息失败，但不影响主流程: {}", e.getMessage());
+        }
 
         log.info("AI回复处理完成: messageId={}, status={}", aiMessage.getId(), aiMessage.getStatus());
         return aiMessage;

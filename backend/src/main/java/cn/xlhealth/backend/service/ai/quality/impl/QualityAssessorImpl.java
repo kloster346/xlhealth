@@ -86,6 +86,21 @@ public class QualityAssessorImpl implements QualityAssessor {
             return assessMockAIRelevance(request, response);
         }
 
+        // 检查是否为简单问候
+        String userLower = userMessage.toLowerCase().trim();
+        String aiLower = aiContent.toLowerCase();
+        
+        // 简单问候的特殊处理
+        if (isSimpleGreeting(userLower)) {
+            if (aiLower.contains("你好") || aiLower.contains("您好") || 
+                aiLower.contains("欢迎") || aiLower.contains("很高兴") ||
+                aiLower.contains("帮助") || aiLower.contains("服务")) {
+                return 85; // 问候得到适当回应
+            } else {
+                return 70; // 基本回应
+            }
+        }
+
         // 简单关键词匹配
         Set<String> userKeywords = extractKeywords(userMessage.toLowerCase());
         Set<String> responseKeywords = extractKeywords(aiContent.toLowerCase());
@@ -245,17 +260,19 @@ public class QualityAssessorImpl implements QualityAssessor {
             return 0;
         }
 
-        int score = 50; // 基础分
+        int score = 60; // 提高基础分
 
-        // 基于长度的简单评估
-        if (content.length() < 20) {
-            score = 30; // 过短
+        // 基于长度的评估，对短回复更宽松
+        if (content.length() < 10) {
+            score = 40; // 极短
+        } else if (content.length() < 20) {
+            score = 60; // 短但可接受（如问候语回复）
         } else if (content.length() < 50) {
-            score = 50; // 较短
+            score = 70; // 较短
         } else if (content.length() < 100) {
-            score = 70; // 中等
+            score = 80; // 中等
         } else if (content.length() < 200) {
-            score = 85; // 较长
+            score = 90; // 较长
         } else {
             score = 95; // 充分
         }
@@ -264,6 +281,12 @@ public class QualityAssessorImpl implements QualityAssessor {
         if (content.contains("希望能帮到你") || content.contains("祝你") ||
                 content.contains("如有其他问题") || content.contains("期待")) {
             score += 5;
+        }
+
+        // 对简单问候给予额外加分
+        if (content.contains("你好") || content.contains("您好") || 
+            content.contains("欢迎") || content.contains("很高兴")) {
+            score += 10;
         }
 
         return Math.min(100, score);
@@ -387,6 +410,25 @@ public class QualityAssessorImpl implements QualityAssessor {
         }
         
         return keywords;
+    }
+    
+    /**
+     * 判断是否为简单问候
+     */
+    private boolean isSimpleGreeting(String message) {
+        if (message == null || message.trim().isEmpty()) {
+            return false;
+        }
+        
+        String msg = message.trim().toLowerCase();
+        
+        // 常见的简单问候语
+        return msg.equals("你好") || msg.equals("您好") || 
+               msg.equals("hi") || msg.equals("hello") ||
+               msg.equals("嗨") || msg.equals("哈喽") ||
+               msg.equals("早上好") || msg.equals("下午好") || msg.equals("晚上好") ||
+               msg.equals("你好吗") || msg.equals("您好吗") ||
+               msg.equals("在吗") || msg.equals("在不在");
     }
     
     /**
